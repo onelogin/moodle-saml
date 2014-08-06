@@ -30,10 +30,6 @@
  * 
  */
 
-	$module->version  = 2014022001;  // The current module version (Date: YYYYMMDDXX)
-	$module->requires  = 2013012801; 
-	$module->cron     = 0;           // Period for cron to check this module (secs)
-
 	$plugin->version  = 2014022001;  // The current module version (Date: YYYYMMDDXX)
 	$plugin->requires  = 2013012801;
 	$plugin->cron     = 0;           // Period for cron to check this module (secs)
