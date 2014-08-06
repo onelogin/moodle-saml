@@ -182,8 +182,7 @@ if (isset($err['idp_sso_target_url_empty'])) {
 <tr valign="top">
     <td align="right" style="font-size:12px; font-weight:bold;min-width: 180px;"><?php print_string("auth_onelogin_saml_x509certificate", "auth_onelogin_saml"); ?>:</td>
     <td style="font-size:10px;">
-        <textarea rows="25" cols="80" name="x509certificate" style="font-size:9px; font:Verdana;">
-            <?php if ($config->x509certificate) echo $config->x509certificate; ?></textarea>
+        <textarea rows="25" cols="80" name="x509certificate" style="font-size:9px; font:Verdana;"><?php if ($config->x509certificate) echo $config->x509certificate; ?></textarea>
         <br><?php print_string("auth_onelogin_saml_x509certificate_description", "auth_onelogin_saml"); ?>
     </td>
 </tr>
