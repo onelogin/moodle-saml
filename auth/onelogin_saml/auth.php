@@ -235,7 +235,12 @@
 		function loginpage_hook() {
 			// Prevent username from being shown on login page after logout
 			$GLOBALS['CFG']->nolastloggedin = true;
-			
+
+			if (!isset($_GET['normal'])) {
+				$init_sso_url = $GLOBALS['CFG']->wwwroot.'/auth/onelogin_saml/index.php';
+				redirect($init_sso_url);
+			}
+
 			return;
 		}
 
