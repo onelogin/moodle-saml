@@ -66,14 +66,12 @@
 		*/
 		function user_login($username, $password) {
 			// if true, user_login was initiated by onelogin_saml/index.php
-			if (isset($GLOBALS['onelogin_saml_login'])) {
-				unset($GLOBALS['onelogin_saml_login']);
+			if (isset($GLOBALS['onelogin_saml_login_attributes'])) {
 				return TRUE;
 			}
 			return FALSE;
 		}
-		
-		
+
 		/**
 		* Returns the user information for 'external' users. In this case the
 		* attributes provided by Identity Provider
@@ -236,12 +234,10 @@
 			// Prevent username from being shown on login page after logout
 			$GLOBALS['CFG']->nolastloggedin = true;
 
-			if (!isset($_GET['normal'])) {
+			if (!isset($_GET['normal']) && (empty($_POST['username']) && empty($_POST['password']))) {
 				$init_sso_url = $GLOBALS['CFG']->wwwroot.'/auth/onelogin_saml/index.php';
 				redirect($init_sso_url);
 			}
-
-			return;
 		}
 
 		function logoutpage_hook() {
