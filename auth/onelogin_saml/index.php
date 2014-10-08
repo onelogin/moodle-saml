@@ -26,7 +26,7 @@
  * 
  * SAML is very powerful and flexible, but the specification can be quite a handful. Now OneLogin is 
  * releasing this SAML toolkit for your Moodle application to enable you to integrate SAML in seconds 
- * instead of months. We’ve filtered the signal from the noise and come up with a simple setup that will 
+ * instead of months. Weâ€™ve filtered the signal from the noise and come up with a simple setup that will 
  * work for most applications out there.
  * 
  */
@@ -103,11 +103,12 @@
 	                deleteLocalSession();
 	            }	            
 	            $auth->processSLO();
-	            if (empty($auth->getErrors())) {
+	            $errors = $auth->getErrors();
+	            if (empty($errors)) {
 	                deleteLocalSession();
 	            }
 	            else {
-	                print_r(implode(', ', $auth->getErrors()));
+	                print_r(implode(', ', $errors));
 	                exit();
 	            }
 	        }
