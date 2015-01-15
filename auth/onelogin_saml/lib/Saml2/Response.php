@@ -58,6 +58,9 @@ class OneLogin_Saml2_Response
 
         $this->document = new DOMDocument();
         $this->document = OneLogin_Saml2_Utils::loadXML($this->document, $this->response);
+        if (!$this->document) {
+            throw new Exception('SAML Response could not be processed');
+        }
 
         // Quick check for the presence of EncryptedAssertion
         $encryptedAssertionNodes = $this->document->getElementsByTagName('EncryptedAssertion');
@@ -108,7 +111,14 @@ class OneLogin_Saml2_Response
                 $signNodes = $this->document->getElementsByTagName('Signature');
             }
             foreach ($signNodes as $signNode) {
-                $signedElements[] = $signNode->parentNode->tagName;
+                $signedElements[] = $signNode->parentNode->localName;
+            }
+
+            if (!empty($signedElements)) {
+                // Check SignedElements
+                if (!$this->validateSignedElements($signedElements)) {
+                    throw new Exception('Found an unexpected Signature Element. SAML Response rejected');
+                }
             }
 
             if ($this->_settings->isStrict()) {
@@ -234,11 +244,11 @@ class OneLogin_Saml2_Response
                     throw new Exception("A valid SubjectConfirmation was not found on this Response");
                 }
 
-                if ($security['wantAssertionsSigned'] && !in_array('saml:Assertion', $signedElements)) {
+                if ($security['wantAssertionsSigned'] && !in_array('Assertion', $signedElements)) {
                     throw new Exception("The Assertion of the Response is not signed and the SP requires it");
                 }
                 
-                if ($security['wantMessagesSigned'] && !in_array('samlp:Response', $signedElements)) {
+                if ($security['wantMessagesSigned'] && !in_array('Response', $signedElements)) {
                     throw new Exception("The Message of the Response is not signed and the SP requires it");
                 }
             }
@@ -246,20 +256,25 @@ class OneLogin_Saml2_Response
             if (!empty($signedElements)) {
                 $cert = $idpData['x509cert'];
                 $fingerprint = $idpData['certFingerprint'];
-                // Only validates the first sign found
-                if (in_array('samlp:Response', $signedElements)) {
+
+                // Only validates the first signed element
+                if (in_array('Response', $signedElements)) {
                     $documentToValidate = $this->document;
                 } else {
+                    $documentToValidate = $signNodes->item(0)->parentNode;
                     if ($this->encrypted) {
-                        $documentToValidate = $this->decryptedDocument;
-                    } else {
-                        $documentToValidate = $this->document;
+                        $encryptedIDNodes = OneLogin_Saml2_Utils::query($this->decryptedDocument, '/samlp:Response/saml:EncryptedAssertion/saml:Assertion/saml:Subject/saml:EncryptedID');
+                        if ($encryptedIDNodes->length > 0) {
+                            throw new Exception('Unsigned SAML Response that contains a signed and encrypted Assertion with encrypted nameId is not supported.');
+                        }
                     }
                 }
 
                 if (!OneLogin_Saml2_Utils::validateSign($documentToValidate, $cert, $fingerprint)) {
                     throw new Exception('Signature validation failed. SAML Response rejected');
                 }
+            } else {
+                throw new Exception('No Signature found. SAML Response rejected');
             }
             return true;
         } catch (Exception $e) {
@@ -453,7 +468,8 @@ class OneLogin_Saml2_Response
 
             $attributeValues = array();
             foreach ($entry->childNodes as $childNode) {
-                if ($childNode->nodeType == XML_ELEMENT_NODE && $childNode->tagName === $childNode->prefix.':AttributeValue') {
+                $tagName = ($childNode->prefix ? $childNode->prefix.':' : '') . 'AttributeValue';
+                if ($childNode->nodeType == XML_ELEMENT_NODE && $childNode->tagName === $tagName) {
                     $attributeValues[] = $childNode->nodeValue;
                 }
             }
@@ -498,6 +514,26 @@ class OneLogin_Saml2_Response
             if ($naAttribute && Onelogin_SAML2_Utils::parseSAML2Time($naAttribute->textContent) + OneLogin_Saml2_Constants::ALOWED_CLOCK_DRIFT <= time()) {
                 return false;
             }
+        }
+        return true;
+    }
+
+    /**
+     * Verifies that the document has the expected signed nodes.
+     *
+     * @return bool
+     */
+    public function validateSignedElements($signedElements)
+    {
+        if (count($signedElements) > 2) {
+            return false;
+        }
+        $ocurrence = array_count_values($signedElements);
+        if ((in_array('Response', $signedElements) && $ocurrence['Response'] > 1) ||
+            (in_array('Assertion', $signedElements) && $ocurrence['Assertion'] > 1) ||
+            !in_array('Response', $signedElements) && !in_array('Assertion', $signedElements)
+        ) {
+            return false;
         }
         return true;
     }
@@ -572,7 +608,7 @@ class OneLogin_Saml2_Response
         if (empty($pem)) {
             throw new Exception("No private key available, check settings");
         }
-
+        
         $objenc = new XMLSecEnc();
         $encData = $objenc->locateEncryptedData($dom);
         if (!$encData) {
@@ -597,7 +633,6 @@ class OneLogin_Saml2_Response
         if (empty($objKey->key)) {
             $objKey->loadKey($key);
         }
-       
         $decrypt = $objenc->decryptNode($objKey, true);
         if ($decrypt instanceof DOMDocument) {
             return $decrypt;
