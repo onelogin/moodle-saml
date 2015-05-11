@@ -8,7 +8,7 @@
 
 	require_once('functions.php');
 
-	$settings = get_saml_settings();
+	$settings = auth_onelogin_saml_get_settings();
 
 	$auth = new Onelogin_Saml2_Auth($settings);
 	$settings = $auth->getSettings();

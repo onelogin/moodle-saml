@@ -34,10 +34,24 @@
 	global $CFG;
 
 	if (stristr(strtolower(PHP_OS), "win") === false) {
-		require_once($GLOBALS['CFG']->libdir.'/authlib.php');
+		require_once($CFG->libdir.'/authlib.php');
 	} else {
-		require_once($GLOBALS['CFG']->libdir.'\authlib.php');
+		require_once($CFG->libdir.'\authlib.php');
 	}
+
+ 	set_config('field_lock_email', 'unlocked', 'auth/onelogin_saml');
+    set_config('field_updatelocal_email', 'oncreate', 'auth/onelogin_saml');
+    set_config('field_updatelocal_email', 'onlogin', 'auth/onelogin_saml');
+
+ 	set_config('field_lock_firstname', 'unlocked', 'auth/onelogin_saml');
+    set_config('field_updatelocal_firstname', 'oncreate', 'auth/onelogin_saml');
+    set_config('field_updatelocal_firstname', 'onlogin', 'auth/onelogin_saml');
+
+ 	set_config('field_lock_lastname', 'unlocked', 'auth/onelogin_saml');
+    set_config('field_updatelocal_lastname', 'oncreate', 'auth/onelogin_saml');
+    set_config('field_updatelocal_lastname', 'onlogin', 'auth/onelogin_saml');
+
+    set_config('field_updateremote_email', '0', 'auth/onelogin_saml');
 
 	//if (!defined('MOODLE_INTERNAL')) {
 	//	die('Direct access to this script is forbidden.');    ///  It must be included from a Moodle page
@@ -65,8 +79,9 @@
 		* @return bool Authentication success or failure.
 		*/
 		function user_login($username, $password) {
+			global $SESSION;
 			// if true, user_login was initiated by onelogin_saml/index.php
-			if (isset($GLOBALS['onelogin_saml_login_attributes'])) {
+			if (isset($SESSION->onelogin_saml_login_attributes)) {
 				return TRUE;
 			}
 			return FALSE;
@@ -79,10 +94,12 @@
 		* @return array $result Associative array of user data
 		*/
 		function get_userinfo($username=null) {
+			global $SESSION;
 
-			$saml_attributes = $GLOBALS['onelogin_saml_login_attributes'];
-			$nameID = $GLOBALS['onelogin_saml_nameID'];
+			$saml_attributes = $SESSION->onelogin_saml_login_attributes;
+			$nameID = $SESSION->onelogin_saml_nameID;
 			$mapping = $this->get_attributes();
+
 			if (empty($saml_attributes)) {
 				$username = $nameID;
 				$email = $username;
@@ -125,7 +142,7 @@
 			    ($saml_account_matcher == 'email' && empty($user['email'])))) {
 				$user = False;
 			}
-			
+
 			return $user;
 		}
 		
@@ -148,9 +165,11 @@
 		 * Get and map roles from the saml assertion
 		 */
 		function obtain_roles() {
+			global $SESSION;
+
 			$roles = array();
 
-			$saml_attributes = $GLOBALS['onelogin_saml_login_attributes'];
+			$saml_attributes = $SESSION->onelogin_saml_login_attributes;
 			$roleMapping = $this->config->saml_role_map;
 	    	if (!empty($roleMapping) && isset($saml_attributes[$roleMapping]) && !empty($saml_attributes[$roleMapping])){
 	    		$siteadminMapping = explode(',', $this->config->saml_role_siteadmin_map);
@@ -231,26 +250,27 @@
 		}
 
 		function loginpage_hook() {
+			global $CFG;
 			// Prevent username from being shown on login page after logout
-			$GLOBALS['CFG']->nolastloggedin = true;
+			$CFG->nolastloggedin = true;
 
 			if (!isset($_GET['normal']) && (empty($_POST['username']) && empty($_POST['password']))) {
-				$init_sso_url = $GLOBALS['CFG']->wwwroot.'/auth/onelogin_saml/index.php';
+				$init_sso_url = $CFG->wwwroot.'/auth/onelogin_saml/index.php';
 				redirect($init_sso_url);
 			}
 		}
 
 		function logoutpage_hook() {
-			global $SESSION;
-
-			$logout_url = $GLOBALS['CFG']->wwwroot.'/auth/onelogin_saml/index.php?logout=1';
+			global $SESSION, $CFG;
+			
+			$logout_url = $CFG->wwwroot.'/auth/onelogin_saml/index.php?logout=1';
 
 			if (!isset($SESSION->isSAMLSessionControlled)) {
-				$logout_url .= '&normal';				
+				$logout_url .= '&normal';
 			}
 
 			require_logout();
-			set_moodle_cookie('nobody');			
+			set_moodle_cookie('nobody');
 			redirect($logout_url);
 		}
 		
@@ -440,7 +460,7 @@
 
 			require_once 'functions.php';
 			require_once '_toolkit_loader.php';
-			$settings = get_saml_settings();
+			$settings = auth_onelogin_saml_get_settings();
 
         	echo $OUTPUT->notification('Debug mode '. ($settings['strict']?'<strong>on</strong>. '."In production turn it off":'<strong>off</strong>'), 'userinfobox notifysuccess');
         	echo $OUTPUT->notification('Strict mode '. ($settings['debug']?'<strong>on</strong>':'<strong>off</strong>. '."In production we recommend to turn it on."), 'userinfobox notifysuccess');

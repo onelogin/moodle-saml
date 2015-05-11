@@ -36,7 +36,7 @@
 	 * This function returns the SAML settings
 	 * 
 	 */
-	function get_saml_settings() {
+	function auth_onelogin_saml_get_settings() {
 		
 		global $CFG;
 
@@ -224,13 +224,6 @@
 		print_error('[client '.getremoteaddr()."]  $CFG->wwwroot  ---&gt;  FAILED LOGIN: $username  ".$_SERVER['HTTP_USER_AGENT']);
 		return false;
 	}
-	
-	
-	function logoutpage_hook() {
-		global $CFG;
-		redirect($CFG->wwwroot.'/auth/onelogin_saml/index.php?logout=1', 0);
-	}
-	
 	/**
 	 * Add slashes for single quotes and backslashes
 	 * so they can be included in single quoted string
@@ -332,7 +325,7 @@
 		fclose($stderr);
 	}
 	
-	function deleteLocalSession() {
+	function auth_onelogin_saml_deleteLocalSession() {
 		if (isset($_SESSION)) {
 			foreach($_SESSION as $key => $val) {
 	            $_SESSION[$key] = ''; // cannot just overwrite session data, causes segfaults in some versions of PHP 

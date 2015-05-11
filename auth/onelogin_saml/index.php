@@ -33,9 +33,7 @@
 
 	global $CFG, $USER, $SESSION, $POST, $_POST, $_GET, $_SERVER, $DB, $SITE;
 
-	define('SAML_INTERNAL', 1);
-	define('SAML_RETRIES', 10);
-	$SAML_RETRIES = 10;
+	define('AUTH_ONELOGIN_SAML_RETRIES', 10);
 
 	// do the normal Moodle bootstraping so we have access to all config and the DB
 	require_once('../../config.php');
@@ -57,13 +55,13 @@
 	 * if otherwise specified
 	 */
 
-	$retry = isset($SESSION->retry) ? $SESSION->retry : 0;
-	if ($retry == $SAML_RETRIES) {
+	$retry = isset($SESSION->saml_retry_count) ? $SESSION->saml_retry_count : 0;
+	if ($retry == AUTH_ONELOGIN_SAML_RETRIES) {
 		// too many tries at logging in
 		session_write_close();
 		print_error('retriesexceeded', 'auth_onelogin_saml', '', $retry);
 	}
-	$SESSION->retry = $retry + 1;
+	$SESSION->saml_retry_count = $retry + 1;
 
 	// save the jump target - this is checked later that it starts with $CFG->wwwroot, and cleaned
 	if (isset($_GET['wantsurl'])) {
@@ -78,7 +76,7 @@
 	// get the plugin config for saml
 	$pluginconfig = get_config('auth/onelogin_saml');
 	require_once '_toolkit_loader.php';
-	$settings = get_saml_settings();
+	$settings = auth_onelogin_saml_get_settings();
 	$auth = new Onelogin_Saml2_Auth($settings);
 
 	if (isset($_GET['logout']) && $_GET['logout']) {
@@ -93,19 +91,19 @@
 		}
 	    
 		if (isset($_GET['normal'])) {
-			deleteLocalSession();
+			auth_onelogin_saml_deleteLocalSession();
 		}
 		else {
 	        if (isset($_GET) && (isset($_GET['SAMLRequest']) || isset($_GET['SAMLResponse']))) {
 
 	            // Delete the local session must be done on processSLO
 	            if (isset($_GET['SAMLRequest'])) {
-	                deleteLocalSession();
+	                auth_onelogin_saml_deleteLocalSession();
 	            }	            
 	            $auth->processSLO();
 	            $errors = $auth->getErrors();
 	            if (empty($errors)) {
-	                deleteLocalSession();
+	                auth_onelogin_saml_deleteLocalSession();
 	            }
 	            else {
 	                print_r(implode(', ', $errors));
@@ -131,8 +129,8 @@
 			$auth->processResponse();
 			$errors = $auth->getErrors();
 			if (empty($errors)) {
-				$GLOBALS['onelogin_saml_nameID'] = $onelogin_saml_nameId = $auth->getNameId();
-				$GLOBALS['onelogin_saml_login_attributes'] = $saml_attributes = $auth->getAttributes();
+				$SESSION->onelogin_saml_nameID = $onelogin_saml_nameId = $auth->getNameId();
+				$SESSION->onelogin_saml_login_attributes = $saml_attributes = $auth->getAttributes();
 				$wantsurl = isset($SESSION->wantsurl) ? $SESSION->wantsurl : FALSE;
 			} else {
 				print_error("An invalid SAML response was received from the Identity Provider. Contact the admin.");
@@ -155,7 +153,7 @@
 
 	// Valid session. Register or update user in Moodle, log him on, and redirect to Moodle front
 	// we require the plugin to know that we are now doing a saml login in hook puser_login
-	$GLOBALS['onelogin_saml_login'] = TRUE;
+	$SESSION->onelogin_saml_login = TRUE;
 
 	$samlplugin = get_auth_plugin('onelogin_saml');
 	$saml_user = $samlplugin->get_userinfo(null);
