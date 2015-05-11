@@ -1,10 +1,8 @@
 <?php
 	global $CFG;
 
-	$string['auth_onelogin_samltitle']         = 'OneLogin SAML'; //SSO Authentication
-	
-	
-	
+	$string['auth_onelogin_samltitle'] = 'OneLogin SAML'; //SSO Authentication
+
 	$string['auth_onelogin_samldescription']   = '
 		<p style="text-align:center;" align="center"><strong><span style=" text-decoration:underline;">
 			Single Sign-On (SSO) SAML-based authentication by the one and only...</span> <br /><br /><a href="http://www.onelogin.com/" style="text-decoration:none;font-size:24px;"><img alt="OneLogin" src="'.$CFG->wwwroot.'/auth/onelogin_saml/onelogin.png"></a></strong>
@@ -146,6 +144,3 @@
 	$string['auth_onelogin_saml_username_email_error'] = 'The identity provider returned a set of data that does not contain the SAML username/email mapping field. Once of this field is required to login. <br />Please check your Username/Email Address Attribute Mapping configuration.';
 
 	$string['pluginname'] = 'OneLogin SAML SSO Authentication';
-
-
-?>
