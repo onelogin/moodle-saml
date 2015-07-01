@@ -33,7 +33,7 @@
  */
 	global $CFG;
 
-	if (stristr($phpos, 'win') && !stristr(PHP_OS, 'darwin')) {
+	if (stristr(PHP_OS, 'win') && !stristr(PHP_OS, 'darwin')) {
 		require_once($CFG->libdir.'/authlib.php');
 	} else {
 		require_once($CFG->libdir.'\authlib.php');
