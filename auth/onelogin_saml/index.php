@@ -89,33 +89,33 @@
 		else {
 			$location = $CFG->wwwroot;
 		}
-	    
+
 		if (isset($_GET['normal'])) {
 			auth_onelogin_saml_deleteLocalSession();
 		}
 		else {
-	        if (isset($_GET) && (isset($_GET['SAMLRequest']) || isset($_GET['SAMLResponse']))) {
+			if (isset($_GET) && (isset($_GET['SAMLRequest']) || isset($_GET['SAMLResponse']))) {
 
-	            // Delete the local session must be done on processSLO
-	            if (isset($_GET['SAMLRequest'])) {
-	                auth_onelogin_saml_deleteLocalSession();
-	            }	            
-	            $auth->processSLO();
-	            $errors = $auth->getErrors();
-	            if (empty($errors)) {
-	                auth_onelogin_saml_deleteLocalSession();
-	            }
-	            else {
-	                print_r(implode(', ', $errors));
-	                exit();
-	            }
-	        }
-	        else {
-	        	if ($pluginconfig->saml_slo) {
-	            	$auth->logout($location);
-	            	exit();
-	            }
-	        }
+				// Delete the local session must be done on processSLO
+				if (isset($_GET['SAMLRequest'])) {
+					auth_onelogin_saml_deleteLocalSession();
+				}
+				$auth->processSLO();
+				$errors = $auth->getErrors();
+				if (empty($errors)) {
+					auth_onelogin_saml_deleteLocalSession();
+				}
+				else {
+					print_r(implode(', ', $errors));
+					exit();
+				}
+				}
+				else {
+					if ($pluginconfig->saml_slo) {
+						$auth->logout($location);
+						exit();
+					}
+				}
 		}
 		if($pluginconfig->saml_logout_redirect_url){
 			$location = $pluginconfig->saml_logout_redirect_url;
