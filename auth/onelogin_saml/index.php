@@ -117,6 +117,9 @@
 	            }
 	        }
 		}
+		if($pluginconfig->saml_logout_redirect_url){
+			$location = $pluginconfig->saml_logout_redirect_url;
+		}
 		header('Location: '.$location);
 		exit();
 	}

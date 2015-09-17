@@ -33,25 +33,25 @@
  */
 	global $CFG;
 
-	if (stristr(PHP_OS, 'win') && !stristr(PHP_OS, 'darwin')) {
+	 if (stristr(PHP_OS, 'win') && !stristr(PHP_OS, 'darwin')) {
 		require_once($CFG->libdir.'/authlib.php');
 	} else {
 		require_once($CFG->libdir.'\authlib.php');
 	}
 
-	set_config('field_lock_email', 'unlocked', 'auth/onelogin_saml');
-	set_config('field_updatelocal_email', 'oncreate', 'auth/onelogin_saml');
-	set_config('field_updatelocal_email', 'onlogin', 'auth/onelogin_saml');
+ 	set_config('field_lock_email', 'unlocked', 'auth/onelogin_saml');
+    set_config('field_updatelocal_email', 'oncreate', 'auth/onelogin_saml');
+    set_config('field_updatelocal_email', 'onlogin', 'auth/onelogin_saml');
 
  	set_config('field_lock_firstname', 'unlocked', 'auth/onelogin_saml');
-	set_config('field_updatelocal_firstname', 'oncreate', 'auth/onelogin_saml');
-	set_config('field_updatelocal_firstname', 'onlogin', 'auth/onelogin_saml');
+    set_config('field_updatelocal_firstname', 'oncreate', 'auth/onelogin_saml');
+    set_config('field_updatelocal_firstname', 'onlogin', 'auth/onelogin_saml');
 
-	set_config('field_lock_lastname', 'unlocked', 'auth/onelogin_saml');
-	set_config('field_updatelocal_lastname', 'oncreate', 'auth/onelogin_saml');
-	set_config('field_updatelocal_lastname', 'onlogin', 'auth/onelogin_saml');
+ 	set_config('field_lock_lastname', 'unlocked', 'auth/onelogin_saml');
+    set_config('field_updatelocal_lastname', 'oncreate', 'auth/onelogin_saml');
+    set_config('field_updatelocal_lastname', 'onlogin', 'auth/onelogin_saml');
 
-	set_config('field_updateremote_email', '0', 'auth/onelogin_saml');
+    set_config('field_updateremote_email', '0', 'auth/onelogin_saml');
 
 	//if (!defined('MOODLE_INTERNAL')) {
 	//	die('Direct access to this script is forbidden.');    ///  It must be included from a Moodle page
@@ -413,6 +413,9 @@
 		    if (!isset($config->sp_privatekey)) {
 		        $config->sp_privatekey = '';
 		    }
+		    if (!isset($config->saml_logout_redirect_url)) {
+		        $config->saml_logout_redirect_url = '';
+		    }
 			
 			set_config('idp_sso_target_url', trim($config->idp_sso_target_url), 'auth/onelogin_saml');
 			set_config('idp_sso_issuer_url', trim($config->idp_sso_issuer_url), 'auth/onelogin_saml');
@@ -444,6 +447,7 @@
 			set_config('saml_want_assertion_encrypted',  $config->saml_want_assertion_encrypted, 'auth/onelogin_saml');
 			set_config('sp_x509cert',  trim($config->sp_x509cert), 'auth/onelogin_saml');
 			set_config('sp_privatekey',  trim($config->sp_privatekey), 'auth/onelogin_saml');
+			set_config('saml_logout_redirect_url',  trim($config->saml_logout_redirect_url), 'auth/onelogin_saml');
 
 			return true;
 		}

@@ -76,7 +76,7 @@
 	$string['auth_onelogin_saml_idp_sso_issuer_url_description'] = 'Identifier of the IdP entity. ("Issuer URL")';
 	$string['auth_onelogin_saml_idp_sso_target_url'] = 'Single Sign On Service Url';
 	$string['auth_onelogin_saml_idp_sso_target_url_description'] = 'SSO endpoint info of the IdP. URL target of the IdP where the SP will send the Authentication Request. ("SAML 2.0 Endpoint (HTTP)")';
-	$string['auth_onelogin_saml_idp_slo_target_url'] = 'Single Log Oout Service Url';
+	$string['auth_onelogin_saml_idp_slo_target_url'] = 'Single Log Out Service Url';
 	$string['auth_onelogin_saml_idp_slo_target_url_description'] = 'SLO endpoint info of the IdP. URL target of the IdP where the SP will send the SLO Request. ("SLO Endpoint (HTTP)")';
 	$string['auth_onelogin_saml_x509certificate'] = 'X.509 Certificate';
 	$string['auth_onelogin_saml_x509certificate_description'] = 'Public x509 certificate of the IdP. ("X.509 certificate")';
@@ -130,6 +130,8 @@
 	$string['auth_onelogin_saml_sp_x509cert_description'] = "Public x509 certificate of the SP. Leave this field empty if you gonna provide the private key by the sp.crt";
 	$string['auth_onelogin_saml_sp_privatekey'] = "Service Provider Private Key";
 	$string['auth_onelogin_saml_sp_privatekey_description'] = "Private Key of the SP. Leave this field empty if you gonna provide the private key by the sp.key";
+	$string['auth_onelogin_saml_logout_redirect_url'] = "Logout Redirect URL";
+	$string['auth_onelogin_saml_logout_redirect_url_description'] = "Forces user's browser to be redirected to the specified URL upon logout.";
 
 	$string['auth_onelogin_saml_form_has_errors'] = "The SAML settings form has errors";
 	$string['auth_onelogin_saml_create_or_update_warning'] = "When auto-provisioning or auto-update is enable,";
