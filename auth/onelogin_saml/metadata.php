@@ -1,5 +1,5 @@
 <?php
-
+try {
 	//Load moodle
 	require_once('../../config.php');
 
@@ -8,11 +8,23 @@
 
 	require_once('functions.php');
 
-	$settings = auth_onelogin_saml_get_settings();
+	$settingsInfo = auth_onelogin_saml_get_settings();
 
-	$auth = new Onelogin_Saml2_Auth($settings);
-	$settings = $auth->getSettings();
+
+	$settings = new Onelogin_Saml2_Settings($settingsInfo, true);
 	$metadata = $settings->getSPMetadata();
-	
-	header('Content-Type: text/xml');
-	echo $metadata;
+
+	$errors = $settings->validateMetadata($metadata);
+	if (empty($errors)) {
+		header('Content-Type: text/xml');
+		echo $metadata;
+	} else {
+		throw new OneLogin_Saml2_Error(
+			'Invalid SP metadata: '.implode(', ', $errors),
+			OneLogin_Saml2_Error::METADATA_SP_INVALID
+		);
+	}	
+} catch (Exception $e) {
+	echo $e->getMessage();
+}
+
