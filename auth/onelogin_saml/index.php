@@ -5,12 +5,12 @@
  * 
  * @originalauthor OneLogin, Inc
  * @author Harrison Horowitz, Sixto Martin
- * @version 2.0
+ * @version 2.0.2
  * @license http://www.gnu.org/copyleft/gpl.html GNU Public License
  * @package auth/onelogin_saml
- * @requires XMLSecLibs v1.2.2
+ * @requires XMLSecLibs v2.0.0
  * @requires php-saml 
- * @copyright 2011-2014 OneLogin.com
+ * @copyright 2011-2015 OneLogin.com
  * 
  * @description 
  * Connects to Moodle, builds the configuration, discovers SAML status, and handles the login process accordingly.
