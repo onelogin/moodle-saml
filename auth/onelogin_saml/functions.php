@@ -45,28 +45,28 @@
 		$settings = array (
 			'strict' => ($pluginconfig->saml_strict_mode == 'on')? true: false,
 			'debug' =>  ($pluginconfig->saml_debug_mode == 'on')? true: false,
-		    'idp' => array (
-		        'entityId' => isset($pluginconfig->idp_sso_issuer_url) ? $pluginconfig->idp_sso_issuer_url : '',
-		        'singleSignOnService' => array (
-		            'url' => isset($pluginconfig->idp_sso_target_url) ? $pluginconfig->idp_sso_target_url : '',
-		        ),
-		        'singleLogoutService' => array (
-		            'url' => isset($pluginconfig->idp_slo_target_url) ? $pluginconfig->idp_slo_target_url : '',
-		        ),
-		        'x509cert' => isset($pluginconfig->x509certificate) ? $pluginconfig->x509certificate : '',
-		    ),			
-		    'sp' => array (
-		        'entityId' => (!empty($pluginconfig->sp_entity_id)? $pluginconfig->sp_entity_id : 'moodle-php-saml'),
-		        'assertionConsumerService' => array (
-		            'url' => htmlspecialchars($CFG->wwwroot.'/auth/onelogin_saml/index.php'),
-		        ),
-		        'singleLogoutService' => array (
-		            'url' => htmlspecialchars($CFG->wwwroot.'/auth/onelogin_saml/index.php?logout=1'),
-		        ),
-		        'NameIDFormat' => 'urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress',
-        		'x509cert' => (!empty($pluginconfig->sp_x509cert))? $pluginconfig->sp_x509cert:'',
-        		'privateKey' => (!empty($pluginconfig->sp_privatekey))? $pluginconfig->sp_privatekey:'',
-		    ),
+			'idp' => array (
+				'entityId' => isset($pluginconfig->idp_sso_issuer_url) ? $pluginconfig->idp_sso_issuer_url : '',
+				'singleSignOnService' => array (
+					'url' => isset($pluginconfig->idp_sso_target_url) ? $pluginconfig->idp_sso_target_url : '',
+				),
+				'singleLogoutService' => array (
+					'url' => isset($pluginconfig->idp_slo_target_url) ? $pluginconfig->idp_slo_target_url : '',
+				),
+				'x509cert' => isset($pluginconfig->x509certificate) ? $pluginconfig->x509certificate : '',
+			),			
+			'sp' => array (
+				'entityId' => (!empty($pluginconfig->sp_entity_id)? $pluginconfig->sp_entity_id : 'moodle-php-saml'),
+				'assertionConsumerService' => array (
+					'url' => htmlspecialchars($CFG->wwwroot.'/auth/onelogin_saml/index.php'),
+				),
+				'singleLogoutService' => array (
+					'url' => htmlspecialchars($CFG->wwwroot.'/auth/onelogin_saml/index.php?logout=1'),
+				),
+				'NameIDFormat' => 'urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress',
+				'x509cert' => (!empty($pluginconfig->sp_x509cert))? $pluginconfig->sp_x509cert:'',
+				'privateKey' => (!empty($pluginconfig->sp_privatekey))? $pluginconfig->sp_privatekey:'',
+			),
 			'security' => array (
 				'signMetadata' => false,
 				'nameIdEncrypted' => $pluginconfig->saml_nameid_encrypted == 'on'? true: false,
@@ -166,8 +166,8 @@
 					$DB->set_field('user', 'auth', $auth, $query_conditions);
 					$user->auth = $auth;
 				}
-            	// User already exists in database
-            	if ($saml_update) {
+				// User already exists in database
+				if ($saml_update) {
 					if (empty($user->firstaccess)) { //prevent firstaccess from remaining 0 for manual account that never required confirmation
 						$query_conditions['id'] = $user->id;
 						$DB->set_field('user', 'firstaccess', $user->timemodified, $query_conditions);
@@ -224,6 +224,7 @@
 		print_error('[client '.getremoteaddr()."]  $CFG->wwwroot  ---&gt;  FAILED LOGIN: $username  ".$_SERVER['HTTP_USER_AGENT']);
 		return false;
 	}
+
 	/**
 	 * Add slashes for single quotes and backslashes
 	 * so they can be included in single quoted string
@@ -232,6 +233,7 @@
 	function auth_onelogin_saml_addsingleslashes($input){
 		return preg_replace("/(['\\\])/", "\\\\$1", $input);
 	}
+
 	/**
 	 * Like {@link me()} but returns a full URL
 	 * @see me()
@@ -319,6 +321,7 @@
 			return false;
 		}
 	}
+
 	function auth_onelogin_saml_err($msg) {
 		$stderr = fopen('php://stderr', 'w');
 		fwrite($stderr,"auth_plugin_onelogin_saml: ". $msg . "\n");
@@ -328,12 +331,13 @@
 	function auth_onelogin_saml_deleteLocalSession() {
 		if (isset($_SESSION)) {
 			foreach($_SESSION as $key => $val) {
-	            $_SESSION[$key] = ''; // cannot just overwrite session data, causes segfaults in some versions of PHP 
-	        }
-	    }
-        if(isset($_COOKIE[session_name()])) {
-            setcookie(session_name(), '', time()-42000, '/');
-        }
-        session_destroy();
-        ob_clean();
+				$_SESSION[$key] = ''; // cannot just overwrite session data, causes segfaults in some versions of PHP 
+			}
+		}
+		if(isset($_COOKIE[session_name()])) {
+			setcookie(session_name(), '', time()-42000, '/');
+		}
+		session_destroy();
+		ob_clean();
 	}
+
