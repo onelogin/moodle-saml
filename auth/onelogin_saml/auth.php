@@ -194,24 +194,24 @@
 		}
 
 		/**
-	     * Sync roles for this user - usually creator
-	     *
-	     * @param $user object user object (without system magic quotes)
-	     */
-			function sync_roles($user) {
-				global $CFG, $DB;
+		* Sync roles for this user - usually creator
+		*
+		* @param $user object user object (without system magic quotes)
+		*/
+		function sync_roles($user) {
+			global $CFG, $DB;
 
-				$newRoles = $this->obtain_roles();
+			$newRoles = $this->obtain_roles();
 
-				// Process siteadmin (special, they are stored at mdl_config)
-				if (in_array('siteadmin', $newRoles)) {
-					$siteadmins = explode(',', $CFG->siteadmins);
-					if (!in_array($user->id, $siteadmins)) {
-						$siteadmins[] = $user->id;
-						$newAdmins = implode(',', $siteadmins);
-						set_config('siteadmins', $newAdmins);
-					}
+			// Process siteadmin (special, they are stored at mdl_config)
+			if (in_array('siteadmin', $newRoles)) {
+				$siteadmins = explode(',', $CFG->siteadmins);
+				if (!in_array($user->id, $siteadmins)) {
+					$siteadmins[] = $user->id;
+					$newAdmins = implode(',', $siteadmins);
+					set_config('siteadmins', $newAdmins);
 				}
+			}
 
 			// Process coursecreator and manager
 			$syscontext = context_system::instance();
@@ -454,9 +454,9 @@
 		
 
 		/**
-	     * Test if settings are ok, print info to output.
-	     * @private
-	     */
+		* Test if settings are ok, print info to output.
+		* 
+		*/
 		public function test_settings() {
 			global $CFG, $OUTPUT;
 
