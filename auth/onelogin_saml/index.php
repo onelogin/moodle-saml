@@ -106,16 +106,16 @@
 					auth_onelogin_saml_deleteLocalSession();
 				}
 				else {
-					print_r(implode(', ', $errors));
+					print_r(implode(', ', $errors).'<br><br>'.$auth->getLastErrorReason());
 					exit();
 				}
+			}
+			else {
+				if ($pluginconfig->saml_slo) {
+					$auth->logout($location);
+					exit();
 				}
-				else {
-					if ($pluginconfig->saml_slo) {
-						$auth->logout($location);
-						exit();
-					}
-				}
+			}
 		}
 		if($pluginconfig->saml_logout_redirect_url){
 			$location = $pluginconfig->saml_logout_redirect_url;
@@ -138,7 +138,7 @@
 			} else {
 				print_error("An invalid SAML response was received from the Identity Provider. Contact the admin.");
 				if ($pluginconfig->saml_debug_mode) {
-					print_error(implode(', ', $errors));
+					print_error(implode(', ', $errors).'<br><br>'.$auth->getLastErrorReason());
 				}
 				exit();
 			}
