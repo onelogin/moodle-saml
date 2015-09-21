@@ -33,11 +33,11 @@
  */
 	global $CFG;
 
-	if (strstr(strlower(PHP_OS), 'win') && strstr(strlower(PHP_OS), 'darwin') !== false) {
-		require_once($CFG->libdir.'/authlib.php');
-	} else {
-		require_once($CFG->libdir.'\authlib.php');
-	}
+        if (strstr(strtolower(PHP_OS), 'win') && strstr(strtolower(PHP_OS), 'darwin') === false) {
+                require_once($CFG->libdir.'\authlib.php');
+        } else {
+                require_once($CFG->libdir.'/authlib.php');
+        }
 
 	set_config('field_lock_email', 'unlocked', 'auth/onelogin_saml');
 	set_config('field_updatelocal_email', 'oncreate', 'auth/onelogin_saml');
