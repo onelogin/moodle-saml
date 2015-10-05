@@ -191,7 +191,7 @@
 					if (!empty($user_saml['lastname']) && $user->lastname != $user_saml['lastname']) {
 						$query_conditions['id'] = $user->id;
 						$DB->set_field('user', 'lastname', $user_saml['lastname'], $query_conditions);
-						$user->firstname = $user_saml['lastname'];
+						$user->lastname = $user_saml['lastname'];
 					}
 
 					$authplugin->sync_roles($user);
