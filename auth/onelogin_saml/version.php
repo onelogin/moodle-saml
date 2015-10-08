@@ -1,11 +1,11 @@
 <?php 
-/* * * * * * * * * *  The OneLogin SAML 2.0.1 authentication module for Moodle  * * * * * * * * *
+/* * * * * * * * * *  The OneLogin SAML 2.0.2 authentication module for Moodle  * * * * * * * * *
  * 
  * version.php - Code fragment to define the version of onelogin_saml
  * 
  * @originalauthor OneLogin, Inc
  * @author Harrison Horowitz, Sixto Martin
- * @version 2.0.1
+ * @version 2.0.2
  * @license http://www.gnu.org/copyleft/gpl.html GNU Public License
  * @package auth/onelogin_saml
  * @requires XMLSecLibs v1.2.2
@@ -25,12 +25,12 @@
  * 
  * SAML is very powerful and flexible, but the specification can be quite a handful. Now OneLogin is 
  * releasing this SAML toolkit for your Moodle application to enable you to integrate SAML in seconds 
- * instead of months. We’ve filtered the signal from the noise and come up with a simple setup that will 
+ * instead of months. Weâ€™ve filtered the signal from the noise and come up with a simple setup that will 
  * work for most applications out there.
  * 
  */
 
-	$plugin->version  = 2015050801;  // The current module version (Date: YYYYMMDDXX)
+	$plugin->version  = 2015081001;  // The current module version (Date: YYYYMMDDXX)
 	$plugin->requires  = 2013012801;
 	$plugin->cron     = 0;           // Period for cron to check this module (secs)
 
