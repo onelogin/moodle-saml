@@ -5,12 +5,12 @@
  * 
  * @originalauthor OneLogin, Inc
  * @author Harrison Horowitz, Sixto Martin
- * @version 2.0
+ * @version 2.1.0
  * @license http://www.gnu.org/copyleft/gpl.html GNU Public License
  * @package auth/onelogin_saml
- * @requires XMLSecLibs v1.2.2
- * @requires php-saml 
- * @copyright 2011-2014 OneLogin.com
+ * @requires XMLSecLibs v2.0.0-mod
+ * @requires php-saml v2.8.0
+ * @copyright 2011-2016 OneLogin.com
  * 
  * @description 
  * Connects to Moodle, builds the configuration, discovers SAML status, and handles the login process accordingly.
@@ -115,7 +115,7 @@
 
 		// ensure that only saml auth module is chosen
 		$authsenabled = get_enabled_auth_plugins();
-		$password = randomPassword();
+		$password = getRandomPassword();
 		$created = false;
 
 		if ($user = get_complete_user_data($saml_account_matcher, $user_saml[$saml_account_matcher])) {
@@ -341,7 +341,7 @@
 		ob_clean();
 	}
 
-	function randomPassword() {
+	function getRandomPassword() {
 		$alphabet = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890';
 		$pass = array();
 		$alphaLength = strlen($alphabet) - 1;

@@ -5,12 +5,12 @@
  * 
  * @originalauthor OneLogin, Inc
  * @author Harrison Horowitz, Sixto Martin
- * @version 2.0.2
+ * @version 2.1.0
  * @license http://www.gnu.org/copyleft/gpl.html GNU Public License
  * @package auth/onelogin_saml
- * @requires XMLSecLibs v2.0.0
- * @requires php-saml 
- * @copyright 2011-2015 OneLogin.com
+ * @requires XMLSecLibs v2.0.0-mod
+ * @requires php-saml v2.8.0
+ * @copyright 2011-2016 OneLogin.com
  * 
  * @description 
  * Connects to Moodle, builds the configuration, discovers SAML status, and handles the login process accordingly.
@@ -61,6 +61,7 @@
 		session_write_close();
 		print_error('retriesexceeded', 'auth_onelogin_saml', '', $retry);
 	}
+
 	$SESSION->saml_retry_count = $retry + 1;
 
 	// save the jump target - this is checked later that it starts with $CFG->wwwroot, and cleaned
@@ -72,6 +73,10 @@
 	if (empty($wantsurl) && isset($SESSION->wantsurl)) {
 		$wantsurl = $SESSION->wantsurl;
 	}
+
+	$normalActived = isset($_GET['normal']);
+	$normalSessionActivated = isset($SESSION->normal) && $SESSION->normal;
+	$logoutActived = isset($_GET['logout']) && $_GET['logout'];
 
 	// get the plugin config for saml
 	$pluginconfig = get_config('auth/onelogin_saml');
@@ -90,7 +95,7 @@
 			$location = $CFG->wwwroot;
 		}
 
-		if (isset($_GET['normal'])) {
+		if ($normalActived) {
 			auth_onelogin_saml_deleteLocalSession();
 		}
 		else {
@@ -124,10 +129,9 @@
 		exit();
 	}
 
-
-	if (!isset($_POST['SAMLResponse']) && !((isset($_GET['normal']) && $_GET['normal']) || (isset($SESSION->normal) && $SESSION->normal))  && !(isset($_GET['logout']) && $_GET['logout'])) {
+	if (!isset($_POST['SAMLResponse']) && !$normalActived && !$normalSessionActivated && !$logoutActived) {
 		$auth->login();
-	} elseif (isset($_POST['SAMLResponse']) && $_POST['SAMLResponse'] && !((isset($_GET['normal']) && $_GET['normal']) || (isset($SESSION->normal) && $SESSION->normal)) && !(isset($_GET['logout']) && $_GET['logout'])) {
+	} else if (isset($_POST['SAMLResponse']) && $_POST['SAMLResponse'] && !$normalActived && !$normalSessionActivated && !$logoutActived) {
 		try {
 			$auth->processResponse();
 			$errors = $auth->getErrors();
