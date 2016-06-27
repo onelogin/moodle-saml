@@ -1,6 +1,6 @@
 <?php  
 /*********************************************************************************
-Copyright (c) 2010-2014, OneLogin, Inc.
+Copyright (c) 2010-2016, OneLogin, Inc.
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
