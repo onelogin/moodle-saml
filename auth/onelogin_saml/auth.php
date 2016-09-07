@@ -50,6 +50,10 @@
 	set_config('field_lock_lastname', 'unlocked', 'auth/onelogin_saml');
 	set_config('field_updatelocal_lastname', 'oncreate', 'auth/onelogin_saml');
 	set_config('field_updatelocal_lastname', 'onlogin', 'auth/onelogin_saml');
+	
+	set_config('field_lock_idnumber', 'unlocked', 'auth/onelogin_saml');
+	set_config('field_updatelocal_idnumber', 'oncreate', 'auth/onelogin_saml');
+	set_config('field_updatelocal_idnumber', 'onlogin', 'auth/onelogin_saml');
 
 	set_config('field_updateremote_email', '0', 'auth/onelogin_saml');
 
@@ -127,11 +131,15 @@
 
 			$firstnameMapping = $mapping['firstname'];
 			$surnameMapping =  $mapping['lastname'];
+			$idnumberMapping = $mapping['idnumber'];
 			if (!empty($firstnameMapping) && isset($saml_attributes[$firstnameMapping]) && !empty($saml_attributes[$firstnameMapping][0])){
 				$user['firstname'] = $saml_attributes[$firstnameMapping][0];
 			}
 			if (!empty($surnameMapping) && isset($saml_attributes[$surnameMapping]) && !empty($saml_attributes[$surnameMapping][0])){
 				$user['lastname'] = $saml_attributes[$surnameMapping][0];
+			}
+			if (!empty($idnumberMapping) && isset($saml_attributes[$idnumberMapping]) && !empty($saml_attributes[$idnumberMapping][0])){
+				$user['idnumber'] = $saml_attributes[$idnumberMapping][0];
 			}
 
 			$saml_account_matcher = $this->config->saml_account_matcher;
@@ -157,6 +165,7 @@
 				"email" => $this->config->saml_email_map,
 				"firstname" => $this->config->saml_firstname_map,
 				"lastname" => $this->config->saml_surname_map,
+				"idnumber" => $this->config->saml_idnumber_map,
 			);
 
 			return $moodleattributes;
@@ -364,6 +373,9 @@
 			if (!isset($config->saml_surname_map)) {
 				$config->saml_surname_map = '';
 			}
+			if (!isset($config->saml_idnumber_map)) {
+				$config->saml_idnumber_map = '';
+			}
 			if (!isset($config->saml_role_map)) {
 				$config->saml_role_map = '';
 			}
@@ -432,6 +444,7 @@
 			set_config('saml_email_map',  trim($config->saml_email_map), 'auth/onelogin_saml');
 			set_config('saml_firstname_map',  trim($config->saml_firstname_map), 'auth/onelogin_saml');
 			set_config('saml_surname_map',  trim($config->saml_surname_map), 'auth/onelogin_saml');
+			set_config('saml_idnumber_map',  trim($config->saml_idnumber_map), 'auth/onelogin_saml');
 			set_config('saml_role_map',  trim($config->saml_role_map), 'auth/onelogin_saml');
 			set_config('saml_role_siteadmin_map',  trim($config->saml_role_siteadmin_map), 'auth/onelogin_saml');
 			set_config('saml_role_coursecreator_map',  trim($config->saml_role_coursecreator_map), 'auth/onelogin_saml');
@@ -521,6 +534,7 @@
 				'saml_email_map' => get_string("auth_onelogin_saml_email_map", "auth_onelogin_saml"),
 				'saml_firstname_map' => get_string("auth_onelogin_saml_firstname_map", "auth_onelogin_saml"),
 				'saml_surname_map' => get_string("auth_onelogin_saml_surname_map", "auth_onelogin_saml"),
+				'saml_idnumber_map' => get_string("auth_onelogin_saml_idnumber_map", "auth_onelogin_saml"),
 				'saml_role_map' => get_string("auth_onelogin_saml_role_map", "auth_onelogin_saml"),
 			);
 

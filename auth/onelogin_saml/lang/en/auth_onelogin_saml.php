@@ -97,6 +97,7 @@
 	$string['auth_onelogin_saml_email_map'] = "Email Address";
 	$string['auth_onelogin_saml_firstname_map'] = "First Name";
 	$string['auth_onelogin_saml_surname_map'] = "Surname";
+	$string['auth_onelogin_saml_idnumber_map'] = "IDnumber";
 	$string['auth_onelogin_saml_role_map'] = "Role";	
 
 	$string['auth_onelogin_saml_rolemapping_head'] = "The IdP can use it's own roles. Set in this section the mapping between IdP and Moodle roles. Accepts multiple valued comma separated. Example: admin,owner,superuser.";

@@ -71,6 +71,9 @@
     if (!isset($config->saml_surname_map)) {
         $config->saml_surname_map = '';
     }
+    if (!isset($config->saml_idnumber_map)) {
+        $config->saml_idnumber_map = '';
+    }
     if (!isset($config->saml_role_map)) {
         $config->saml_role_map = '';
     }
@@ -278,6 +281,12 @@ if (isset($err['saml_surname_map_empty'])) {
     <td align="right" style="font-size:12px; font-weight:bold;min-width: 180px;"><?php print_string("auth_onelogin_saml_surname_map", "auth_onelogin_saml"); ?>:</td>
     <td>
         <input name="saml_surname_map" type="text" value="<?php if ($config->saml_surname_map) echo $config->saml_surname_map; ?>" style="color:blue; width:150px; " />
+    </td>
+</tr>
+<tr valign="top">
+    <td align="right" style="font-size:12px; font-weight:bold;min-width: 180px;"><?php print_string("auth_onelogin_saml_idnumber_map", "auth_onelogin_saml"); ?>:</td>
+    <td>
+        <input name="saml_idnumber_map" type="text" value="<?php if ($config->saml_idnumber_map) echo $config->saml_idnumber_map; ?>" style="color:blue; width:150px; " />
     </td>
 </tr>
 <tr valign="top">
