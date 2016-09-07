@@ -193,6 +193,11 @@
 						$DB->set_field('user', 'lastname', $user_saml['lastname'], $query_conditions);
 						$user->lastname = $user_saml['lastname'];
 					}
+					if (!empty($user_saml['idnumber']) && $user->idnumber != $user_saml['idnumber']) {
+						$query_conditions['id'] = $user->id;
+						$DB->set_field('user', 'idnumber', $user_saml['idnumber'], $query_conditions);
+						$user->idnumber = $user_saml['idnumber'];
+					}
 
 					$authplugin->sync_roles($user);
 				}
