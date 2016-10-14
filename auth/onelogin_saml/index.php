@@ -5,11 +5,11 @@
  * 
  * @originalauthor OneLogin, Inc
  * @author Harrison Horowitz, Sixto Martin
- * @version 2.2.0
+ * @version 2.3.0
  * @license http://www.gnu.org/copyleft/gpl.html GNU Public License
  * @package auth/onelogin_saml
  * @requires XMLSecLibs v2.0.0-mod
- * @requires php-saml v2.9.0
+ * @requires php-saml v2.10.0
  * @copyright 2011-2016 OneLogin.com
  * 
  * @description 
