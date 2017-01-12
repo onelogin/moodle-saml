@@ -5,12 +5,12 @@
  * 
  * @originalauthor OneLogin, Inc
  * @author Harrison Horowitz, Sixto Martin
- * @version 2.3.0
+ * @version 2.4.0
  * @license http://www.gnu.org/copyleft/gpl.html GNU Public License
  * @package auth/onelogin_saml
  * @requires XMLSecLibs v2.0.0-mod
- * @requires php-saml v2.10.0
- * @copyright 2011-2016 OneLogin.com
+ * @requires php-saml v2.10.3
+ * @copyright 2011-2017 OneLogin.com
  * 
  * @description 
  * Connects to Moodle, builds the configuration, discovers SAML status, and handles the login process accordingly.
@@ -118,6 +118,9 @@
     if (!isset($config->saml_want_assertion_encrypted)) {
         $config->saml_want_assertion_encrypted = '';
     }
+    if (!isset($config->saml_nameid_format)) {
+        $config->saml_nameid_format = '';
+    }
     if (!isset($config->sp_x509cert)) {
         $config->sp_x509cert = '';
     }
@@ -133,6 +136,18 @@
         print_string('auth_onelogin_saml_form_has_errors','auth_onelogin_saml');
         echo ' !!</div>';
     }
+
+    $posible_nameidformat_values = array(
+        'urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified',
+        'urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress',
+        'urn:oasis:names:tc:SAML:2.0:nameid-format:transient',
+        'urn:oasis:names:tc:SAML:2.0:nameid-format:persistent',
+        'urn:oasis:names:tc:SAML:2.0:nameid-format:entity',
+        'urn:oasis:names:tc:SAML:2.0:nameid-format:encrypted',
+        'urn:oasis:names:tc:SAML:2.0:nameid-format:kerberos',
+        'urn:oasis:names:tc:SAML:1.1:nameid-format:X509SubjectName',
+         'urn:oasis:names:tc:SAML:1.1:nameid-format:WindowsDomainQualifiedName'
+    );
 ?>
 
 <div id="metadata_link" style="float:right;">
@@ -344,6 +359,19 @@ if (isset($err['saml_surname_map_empty'])) {
         <input name="sp_entity_id" type="text" value="<?php if ($config->sp_entity_id) echo $config->sp_entity_id; ?>" style="color:blue; width:380px; " />
         <p style="padding-top:2px;font-size:11px;min-width: 460px;"><?php print_string("auth_onelogin_saml_sp_entity_id_description", "auth_onelogin_saml"); ?></p>
     </td>    
+</tr>
+<tr valign="top">
+    <td align="right" style="font-size:12px; font-weight:bold;min-width: 180px;"><?php print_string("auth_onelogin_saml_nameid_format", "auth_onelogin_saml"); ?>:</td>
+    <td>
+<?php
+        echo '<select name="saml_nameid_format">';
+        foreach ($posible_nameidformat_values as $nameid_format_value) {
+            echo '<option value='.$nameid_format_value.' '.($nameid_format_value == $config->saml_nameid_format ? 'selected="selected"': '').' >'.$nameid_format_value.'</option>';
+        }
+        echo '</select>';
+?>
+        <p style="padding-top:2px;font-size:11px;min-width: 460px;"><?php print_string("auth_onelogin_saml_nameid_format_description", "auth_onelogin_saml"); ?></p>
+    </td>
 </tr>
 <tr valign="top">
     <td align="right" style="font-size:12px; font-weight:bold;min-width: 180px;"><?php print_string("auth_onelogin_saml_nameid_encrypted", "auth_onelogin_saml"); ?>:</td>

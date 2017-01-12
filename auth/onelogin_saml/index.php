@@ -5,12 +5,12 @@
  * 
  * @originalauthor OneLogin, Inc
  * @author Harrison Horowitz, Sixto Martin
- * @version 2.3.0
+ * @version 2.4.0
  * @license http://www.gnu.org/copyleft/gpl.html GNU Public License
  * @package auth/onelogin_saml
  * @requires XMLSecLibs v2.0.0-mod
- * @requires php-saml v2.10.0
- * @copyright 2011-2016 OneLogin.com
+ * @requires php-saml v2.10.3
+ * @copyright 2011-2017 OneLogin.com
  * 
  * @description 
  * Connects to Moodle, builds the configuration, discovers SAML status, and handles the login process accordingly.
@@ -31,8 +31,6 @@
  * 
  */
 
-	global $CFG, $USER, $SESSION, $POST, $_POST, $_GET, $_SERVER, $DB, $SITE;
-
 	define('AUTH_ONELOGIN_SAML_RETRIES', 10);
 
 	// do the normal Moodle bootstraping so we have access to all config and the DB
@@ -40,6 +38,7 @@
 
 	require_once('functions.php');
 
+	global $CFG, $USER, $SESSION, $POST, $_POST, $_GET, $_SERVER, $DB, $SITE;
 
 	// Normal form failed
 	if (isset($_GET['errorcode']) && $_GET['errorcode'] != 4) {
@@ -84,7 +83,7 @@
 	$settings = auth_onelogin_saml_get_settings();
 	$auth = new Onelogin_Saml2_Auth($settings);
 
-	if (isset($_GET['logout']) && $_GET['logout']) {
+	if ($logoutActived) {
 		if (isset($_GET['RelayState']) && !empty($_GET['RelayState'])) {
 			$location = $_GET['RelayState'];
 		}
@@ -117,6 +116,24 @@
 			}
 			else {
 				if ($pluginconfig->saml_slo) {
+				/*
+					// Here the session is already closed so can't retrieve
+					// the data that was stored.
+
+					$nameid = $sessionIndex = $nameIdFormat = null;
+
+					if (isset($SESSION->onelogin_saml_nameID)) {
+						$nameid = $SESSION->onelogin_saml_nameID;
+					}
+					if (isset($SESSION->onelogin_saml_session_index)) {
+						$sessionIndex = $SESSION->onelogin_saml_session_index;
+					}
+					if (isset($SESSION->onelogin_saml_nameid_format)) {
+						$nameIdFormat = $SESSION->onelogin_saml_nameid_format;
+					}
+
+					$auth->logout($location, array(), $nameid, $sessionIndex, false, $nameIdFormat);
+				*/
 					$auth->logout($location);
 					exit();
 				}
@@ -125,6 +142,7 @@
 		if($pluginconfig->saml_logout_redirect_url){
 			$location = $pluginconfig->saml_logout_redirect_url;
 		}
+
 		header('Location: '.$location);
 		exit();
 	}
@@ -210,7 +228,12 @@
 
 	// flag this as a SAML based login
 	$SESSION->isSAMLSessionControlled = true;
+	$SESSION->onelogin_saml_session_index = $auth->getSessionIndex();
+	$SESSION->onelogin_saml_nameid_format = $auth->getNameIdFormat();
 	
+	$_COOKIE['onelogin_saml_session_index'] = $auth->getSessionIndex();
+	$_COOKIE['onelogin_saml_nameid_format'] = $auth->getNameIdFormat();
+
 	if (isset($wantsurl)) {// and (strpos($wantsurl, $CFG->wwwroot) === 0)
 		$urltogo = clean_param($wantsurl, PARAM_URL);
 	} else {

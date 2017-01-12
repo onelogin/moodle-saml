@@ -6,12 +6,12 @@
  * 
  * @originalauthor OneLogin, Inc
  * @author Harrison Horowitz, Sixto Martin
- * @version 2.3.0
+ * @version 2.4.0
  * @license http://www.gnu.org/copyleft/gpl.html GNU Public License
  * @package auth/onelogin_saml
  * @requires XMLSecLibs v2.0.0-mod
- * @requires php-saml v2.10.0
- * @copyright 2011-2016 OneLogin.com
+ * @requires php-saml v2.10.3
+ * @copyright 2011-2017 OneLogin.com
  * 
  * @description 
  * Connects to Moodle, builds the configuration, discovers SAML status, and handles the login process accordingly.
@@ -402,6 +402,9 @@
 			if (!isset($config->saml_want_assertion_encrypted)) {
 				$config->saml_want_assertion_encrypted = '';
 			}
+			if (!isset($config->saml_nameid_format)) {
+				$config->saml_nameid_format = '';
+			}
 			if (!isset($config->sp_x509cert)) {
 				$config->sp_x509cert = '';
 			}
@@ -416,34 +419,35 @@
 			set_config('idp_sso_issuer_url', trim($config->idp_sso_issuer_url), 'auth/onelogin_saml');
 			set_config('idp_slo_target_url', trim($config->idp_slo_target_url), 'auth/onelogin_saml');
 			set_config('x509certificate', trim($config->x509certificate), 'auth/onelogin_saml');			
-			set_config('saml_auto_create_users',  $config->saml_auto_create_users, 'auth/onelogin_saml');
+			set_config('saml_auto_create_users', $config->saml_auto_create_users, 'auth/onelogin_saml');
 
-			set_config('saml_auto_update_users',  $config->saml_auto_update_users, 'auth/onelogin_saml');
-			set_config('saml_slo',  $config->saml_slo, 'auth/onelogin_saml');
-			set_config('saml_account_matcher',  $config->saml_account_matcher, 'auth/onelogin_saml');
-			set_config('saml_username_map',  trim($config->saml_username_map), 'auth/onelogin_saml');
-			set_config('saml_email_map',  trim($config->saml_email_map), 'auth/onelogin_saml');
-			set_config('saml_email_map',  trim($config->saml_email_map), 'auth/onelogin_saml');
-			set_config('saml_firstname_map',  trim($config->saml_firstname_map), 'auth/onelogin_saml');
-			set_config('saml_surname_map',  trim($config->saml_surname_map), 'auth/onelogin_saml');
-			set_config('saml_idnumber_map',  trim($config->saml_idnumber_map), 'auth/onelogin_saml');
-			set_config('saml_role_map',  trim($config->saml_role_map), 'auth/onelogin_saml');
-			set_config('saml_role_siteadmin_map',  trim($config->saml_role_siteadmin_map), 'auth/onelogin_saml');
-			set_config('saml_role_coursecreator_map',  trim($config->saml_role_coursecreator_map), 'auth/onelogin_saml');
-			set_config('saml_role_manager_map',  trim($config->saml_role_manager_map), 'auth/onelogin_saml');
-			set_config('saml_debug_mode',  $config->saml_debug_mode, 'auth/onelogin_saml');
-			set_config('saml_strict_mode',  $config->saml_strict_mode, 'auth/onelogin_saml');
-			set_config('sp_entity_id',  trim($config->sp_entity_id), 'auth/onelogin_saml');
-			set_config('saml_nameid_encrypted',  $config->saml_nameid_encrypted, 'auth/onelogin_saml');
-			set_config('saml_authn_request_signed',  $config->saml_authn_request_signed, 'auth/onelogin_saml');
-			set_config('saml_logout_request_signed',  $config->saml_logout_request_signed, 'auth/onelogin_saml');
-			set_config('saml_logout_response_signed',  $config->saml_logout_response_signed, 'auth/onelogin_saml');
-			set_config('saml_want_message_signed',  $config->saml_want_message_signed, 'auth/onelogin_saml');
-			set_config('saml_want_assertion_signed',  $config->saml_want_assertion_signed, 'auth/onelogin_saml');
-			set_config('saml_want_assertion_encrypted',  $config->saml_want_assertion_encrypted, 'auth/onelogin_saml');
-			set_config('sp_x509cert',  trim($config->sp_x509cert), 'auth/onelogin_saml');
-			set_config('sp_privatekey',  trim($config->sp_privatekey), 'auth/onelogin_saml');
-			set_config('saml_logout_redirect_url',  trim($config->saml_logout_redirect_url), 'auth/onelogin_saml');
+			set_config('saml_auto_update_users', $config->saml_auto_update_users, 'auth/onelogin_saml');
+			set_config('saml_slo', $config->saml_slo, 'auth/onelogin_saml');
+			set_config('saml_account_matcher', $config->saml_account_matcher, 'auth/onelogin_saml');
+			set_config('saml_username_map', trim($config->saml_username_map), 'auth/onelogin_saml');
+			set_config('saml_email_map', trim($config->saml_email_map), 'auth/onelogin_saml');
+			set_config('saml_email_map', trim($config->saml_email_map), 'auth/onelogin_saml');
+			set_config('saml_firstname_map', trim($config->saml_firstname_map), 'auth/onelogin_saml');
+			set_config('saml_surname_map', trim($config->saml_surname_map), 'auth/onelogin_saml');
+			set_config('saml_idnumber_map', trim($config->saml_idnumber_map), 'auth/onelogin_saml');
+			set_config('saml_role_map', trim($config->saml_role_map), 'auth/onelogin_saml');
+			set_config('saml_role_siteadmin_map', trim($config->saml_role_siteadmin_map), 'auth/onelogin_saml');
+			set_config('saml_role_coursecreator_map', trim($config->saml_role_coursecreator_map), 'auth/onelogin_saml');
+			set_config('saml_role_manager_map', trim($config->saml_role_manager_map), 'auth/onelogin_saml');
+			set_config('saml_debug_mode', $config->saml_debug_mode, 'auth/onelogin_saml');
+			set_config('saml_strict_mode', $config->saml_strict_mode, 'auth/onelogin_saml');
+			set_config('sp_entity_id', trim($config->sp_entity_id), 'auth/onelogin_saml');
+			set_config('saml_nameid_encrypted', $config->saml_nameid_encrypted, 'auth/onelogin_saml');
+			set_config('saml_authn_request_signed', $config->saml_authn_request_signed, 'auth/onelogin_saml');
+			set_config('saml_logout_request_signed', $config->saml_logout_request_signed, 'auth/onelogin_saml');
+			set_config('saml_logout_response_signed', $config->saml_logout_response_signed, 'auth/onelogin_saml');
+			set_config('saml_want_message_signed', $config->saml_want_message_signed, 'auth/onelogin_saml');
+			set_config('saml_want_assertion_signed', $config->saml_want_assertion_signed, 'auth/onelogin_saml');
+			set_config('saml_want_assertion_encrypted', $config->saml_want_assertion_encrypted, 'auth/onelogin_saml');
+			set_config('saml_nameid_format', $config->saml_nameid_format, 'auth/onelogin_saml');
+			set_config('sp_x509cert', trim($config->sp_x509cert), 'auth/onelogin_saml');
+			set_config('sp_privatekey', trim($config->sp_privatekey), 'auth/onelogin_saml');
+			set_config('saml_logout_redirect_url', trim($config->saml_logout_redirect_url), 'auth/onelogin_saml');
 
 			return true;
 		}

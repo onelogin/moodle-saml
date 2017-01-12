@@ -5,12 +5,12 @@
  * 
  * @originalauthor OneLogin, Inc
  * @author Harrison Horowitz, Sixto Martin
- * @version 2.3.0
+ * @version 2.4.0
  * @license http://www.gnu.org/copyleft/gpl.html GNU Public License
  * @package auth/onelogin_saml
  * @requires XMLSecLibs v2.0.0-mod
- * @requires php-saml v2.10.0
- * @copyright 2011-2016 OneLogin.com
+ * @requires php-saml v2.10.3
+ * @copyright 2011-2017 OneLogin.com
  * 
  * @description 
  * Connects to Moodle, builds the configuration, discovers SAML status, and handles the login process accordingly.
@@ -32,7 +32,7 @@
  */
 
     $plugin->component = 'auth_onelogin_saml';
-    $plugin->version  = 2016101401;  // The current module version (Date: YYYYMMDDXX)
+    $plugin->version   = 2017011301;  // The current module version (Date: YYYYMMDDXX)
     $plugin->requires  = 2013012801;
-    $plugin->cron     = 0;           // Period for cron to check this module (secs)
-    $plugin->maturity = MATURITY_STABLE;
+    $plugin->cron      = 0;           // Period for cron to check this module (secs)
+    $plugin->maturity  = MATURITY_STABLE;

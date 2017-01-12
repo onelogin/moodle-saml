@@ -15,6 +15,11 @@ class OneLogin_Saml2_Settings
     private $_paths = array();
 
     /**
+     * @var string
+     */
+    private  $_baseurl;
+
+    /**
      * Strict. If active, PHP Toolkit will reject unsigned or unencrypted messages
      * if it expects them signed or encrypted. If not, the messages will be accepted
      * and some security issues will be also relaxed.
@@ -95,6 +100,7 @@ class OneLogin_Saml2_Settings
      * @param array|object|null $settings SAML Toolkit Settings
      *
      * @throws OneLogin_Saml2_Error If any settings parameter is invalid
+     * @throws Exception If OneLogin_Saml2_Settings is incorrectly supplied
      */
     public function __construct($settings = null, $spValidationOnly = false)
     {
@@ -118,6 +124,12 @@ class OneLogin_Saml2_Settings
                     array(implode(', ', $this->_errors))
                 );
             }
+        } else if ($settings instanceof OneLogin_Saml2_Settings) {
+            throw new OneLogin_Saml2_Error(
+                'Only instances of OneLogin_Saml_Settings are supported.',
+                OneLogin_Saml2_Error::UNSUPPORTED_SETTINGS_OBJECT,
+                array(implode(', ', $this->_errors))
+            );
         } else {
             if (!$this->_loadSettingsFromArray($settings->getValues())) {
                 throw new OneLogin_Saml2_Error(
@@ -238,6 +250,10 @@ class OneLogin_Saml2_Settings
             }
             if (isset($settings['debug'])) {
                 $this->_debug = $settings['debug'];
+            }
+
+            if (isset($settings['baseurl'])) {
+                $this->_baseurl = $settings['baseurl'];
             }
 
             if (isset($settings['compress'])) {
@@ -772,14 +788,14 @@ class OneLogin_Saml2_Settings
 
                 if (!$keyMetadata) {
                     throw new OneLogin_Saml2_Error(
-                        'Private key not found.',
+                        'SP Private key not found.',
                         OneLogin_Saml2_Error::PRIVATE_KEY_FILE_NOT_FOUND
                     );
                 }
 
                 if (!$certMetadata) {
                     throw new OneLogin_Saml2_Error(
-                        'Public cert file not found.',
+                        'SP Public cert not found.',
                         OneLogin_Saml2_Error::PUBLIC_CERT_FILE_NOT_FOUND
                     );
                 }
@@ -801,7 +817,7 @@ class OneLogin_Saml2_Settings
 
                 if (!file_exists($keyMetadataFile)) {
                     throw new OneLogin_Saml2_Error(
-                        'Private key file not found: %s',
+                        'SP Private key file not found: %s',
                         OneLogin_Saml2_Error::PRIVATE_KEY_FILE_NOT_FOUND,
                         array($keyMetadataFile)
                     );
@@ -809,7 +825,7 @@ class OneLogin_Saml2_Settings
 
                 if (!file_exists($certMetadataFile)) {
                     throw new OneLogin_Saml2_Error(
-                        'Public cert file not found: %s',
+                        'SP Public cert file not found: %s',
                         OneLogin_Saml2_Error::PUBLIC_CERT_FILE_NOT_FOUND,
                         array($certMetadataFile)
                     );
@@ -938,6 +954,24 @@ class OneLogin_Saml2_Settings
     public function isDebugActive()
     {
         return $this->_debug;
+    }
+
+    /**
+     * Set a baseurl value.
+     */
+    public function setBaseURL($baseurl)
+    {
+        $this->_baseurl = $baseurl;
+    }
+
+    /**
+     * Returns the baseurl set on the settings if any.
+     *
+     * @return null|string The baseurl
+     */
+    public function getBaseURL()
+    {
+        return $this->_baseurl;
     }
 
     /**
