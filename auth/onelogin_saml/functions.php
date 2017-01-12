@@ -43,8 +43,8 @@
 		$pluginconfig = get_config('auth/onelogin_saml');
 
 		$settings = array (
-			'strict' => ($pluginconfig->saml_strict_mode == 'on')? true: false,
-			'debug' =>  ($pluginconfig->saml_debug_mode == 'on')? true: false,
+			'strict' => (isset($pluginconfig->saml_strict_mode) && $pluginconfig->saml_strict_mode == 'on')? true: false,
+			'debug' =>  (isset($pluginconfig->saml_debug_mode) && $pluginconfig->saml_debug_mode == 'on')? true: false,
 			'idp' => array (
 				'entityId' => isset($pluginconfig->idp_sso_issuer_url) ? $pluginconfig->idp_sso_issuer_url : '',
 				'singleSignOnService' => array (
@@ -69,13 +69,13 @@
 			),
 			'security' => array (
 				'signMetadata' => false,
-				'nameIdEncrypted' => $pluginconfig->saml_nameid_encrypted == 'on'? true: false,
-				'authnRequestsSigned' => $pluginconfig->saml_authn_request_signed == 'on'? true: false,
-				'logoutRequestSigned' => $pluginconfig->saml_logout_request_signed == 'on'? true: false,
-				'logoutResponseSigned' => $pluginconfig->saml_logout_response_signed == 'on'? true: false,
-				'wantMessagesSigned' => $pluginconfig->saml_want_message_signed == 'on'? true: false,
-				'wantAssertionsSigned' => $pluginconfig->saml_want_assertion_signed == 'on'? true: false,
-				'wantAssertionsEncrypted' => $pluginconfig->saml_want_assertion_encrypted == 'on'? true: false,
+				'nameIdEncrypted' => isset($pluginconfig->saml_nameid_encrypted) && $pluginconfig->saml_nameid_encrypted == 'on'? true: false,
+				'authnRequestsSigned' => isset($pluginconfig->saml_authn_request_signed) && $pluginconfig->saml_authn_request_signed == 'on'? true: false,
+				'logoutRequestSigned' => isset($pluginconfig->saml_logout_request_signed) && $pluginconfig->saml_logout_request_signed == 'on'? true: false,
+				'logoutResponseSigned' => isset($pluginconfig->saml_logout_response_signed) && $pluginconfig->saml_logout_response_signed == 'on'? true: false,
+				'wantMessagesSigned' => isset($pluginconfig->saml_want_message_signed) && $pluginconfig->saml_want_message_signed == 'on'? true: false,
+				'wantAssertionsSigned' => isset($pluginconfig->saml_want_assertion_signed) && $pluginconfig->saml_want_assertion_signed == 'on'? true: false,
+				'wantAssertionsEncrypted' => isset($pluginconfig->saml_want_assertion_encrypted) && $pluginconfig->saml_want_assertion_encrypted == 'on'? true: false,
 			)
 		);
 

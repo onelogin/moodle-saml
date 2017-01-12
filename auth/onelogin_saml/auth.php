@@ -33,29 +33,11 @@
  */
 	global $CFG;
 
-        if (strstr(strtolower(PHP_OS), 'win') && strstr(strtolower(PHP_OS), 'darwin') === false) {
-                require_once($CFG->libdir.'\authlib.php');
-        } else {
-                require_once($CFG->libdir.'/authlib.php');
-        }
-
-	set_config('field_lock_email', 'unlocked', 'auth/onelogin_saml');
-	set_config('field_updatelocal_email', 'oncreate', 'auth/onelogin_saml');
-	set_config('field_updatelocal_email', 'onlogin', 'auth/onelogin_saml');
-
-	set_config('field_lock_firstname', 'unlocked', 'auth/onelogin_saml');
-	set_config('field_updatelocal_firstname', 'oncreate', 'auth/onelogin_saml');
-	set_config('field_updatelocal_firstname', 'onlogin', 'auth/onelogin_saml');
-
-	set_config('field_lock_lastname', 'unlocked', 'auth/onelogin_saml');
-	set_config('field_updatelocal_lastname', 'oncreate', 'auth/onelogin_saml');
-	set_config('field_updatelocal_lastname', 'onlogin', 'auth/onelogin_saml');
-	
-	set_config('field_lock_idnumber', 'unlocked', 'auth/onelogin_saml');
-	set_config('field_updatelocal_idnumber', 'oncreate', 'auth/onelogin_saml');
-	set_config('field_updatelocal_idnumber', 'onlogin', 'auth/onelogin_saml');
-
-	set_config('field_updateremote_email', '0', 'auth/onelogin_saml');
+	if (strstr(strtolower(PHP_OS), 'win') && strstr(strtolower(PHP_OS), 'darwin') === false) {
+		require_once($CFG->libdir.'\authlib.php');
+	} else {
+		require_once($CFG->libdir.'/authlib.php');
+	}
 
 	//if (!defined('MOODLE_INTERNAL')) {
 	//	die('Direct access to this script is forbidden.');    ///  It must be included from a Moodle page
