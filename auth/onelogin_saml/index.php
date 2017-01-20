@@ -31,7 +31,7 @@
  * 
  */
 
-	define('AUTH_ONELOGIN_SAML_RETRIES', 10);
+	define('AUTH_ONELOGIN_SAML_RETRIES', 100);
 
 	// do the normal Moodle bootstraping so we have access to all config and the DB
 	require_once('../../config.php');
@@ -158,22 +158,24 @@
 				$SESSION->onelogin_saml_login_attributes = $saml_attributes = $auth->getAttributes();
 				$wantsurl = isset($SESSION->wantsurl) ? $SESSION->wantsurl : FALSE;
 			} else {
-				print_error("An invalid SAML response was received from the Identity Provider. Contact the admin.");
+				$errorMsg = "An invalid SAML response was received from the Identity Provider. Contact the admin.";
 				if ($pluginconfig->saml_debug_mode) {
-					print_error(implode(', ', $errors).'<br><br>'.$auth->getLastErrorReason());
+					$errorMsg .= "<br>".implode(', ', $errors).'<br><br>'.$auth->getLastErrorReason();
 				}
-				exit();
 			}
 		} catch (Exception $e) {
-			print_error("An invalid SAML response was received from the Identity Provider. Contact the admin.");
+			$errorMsg = "An invalid SAML response was received from the Identity Provider. Contact the admin.";
 			if ($pluginconfig->saml_debug_mode) {
-				print_error($e->getMessage());
-			}
-			exit();
+				$errorMsg .= "<br>".$e->getMessage();
+			}			
 		}		
 	} else {
 		// You shouldn't be able to reach here.
 		print_error("Module Setup Error: Review the OneLogin setup instructions for the SAML authentication module, and be sure to change the following one line of code in Moodle's core in 'login/index.php'.<br /><br /><div style=\"text-align:center;\">CHANGE THE FOLLOWING LINE OF CODE (in 'login/index.php')...</div><br /><font style=\"font-size:18px;\"><strong>if (!empty(\$CFG->alternateloginurl)) {</strong></font><br /><br /><div style=\"text-align:center;\">...to...</div><br /><strong><font style=\"font-size:18px;\">if (!empty(\$CFG->alternateloginurl) && !isset(\$_GET['normal'])) { </font></strong> \r\n");
+	}
+
+	if (isset($errorMsg)) {
+		print_error($errorMsg);
 	}
 
 	// Valid session. Register or update user in Moodle, log him on, and redirect to Moodle front
