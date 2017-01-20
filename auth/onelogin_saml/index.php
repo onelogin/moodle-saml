@@ -59,6 +59,7 @@
 		// too many tries at logging in
 		session_write_close();
 		print_error('retriesexceeded', 'auth_onelogin_saml', '', $retry);
+		exit();
 	}
 
 	$SESSION->saml_retry_count = $retry + 1;
@@ -172,10 +173,12 @@
 	} else {
 		// You shouldn't be able to reach here.
 		print_error("Module Setup Error: Review the OneLogin setup instructions for the SAML authentication module, and be sure to change the following one line of code in Moodle's core in 'login/index.php'.<br /><br /><div style=\"text-align:center;\">CHANGE THE FOLLOWING LINE OF CODE (in 'login/index.php')...</div><br /><font style=\"font-size:18px;\"><strong>if (!empty(\$CFG->alternateloginurl)) {</strong></font><br /><br /><div style=\"text-align:center;\">...to...</div><br /><strong><font style=\"font-size:18px;\">if (!empty(\$CFG->alternateloginurl) && !isset(\$_GET['normal'])) { </font></strong> \r\n");
+		exit();
 	}
 
 	if (isset($errorMsg)) {
 		print_error($errorMsg);
+		exit();
 	}
 
 	// Valid session. Register or update user in Moodle, log him on, and redirect to Moodle front
@@ -193,6 +196,7 @@
 		$USER->id = 0;
 		require_once('../../config.php');
 		print_error('auth_onelogin_saml: auth failed due to missing username/email saml attribute: '.$pluginconfig->saml_username_map."<br />".get_string("auth_onelogin_saml_username_email_error", "auth_onelogin_saml")."\r\n");
+		exit();
 	}
 
 
@@ -219,6 +223,7 @@
 		$USER->id = 0;
 		require_once('../../config.php');
 		print_error('pluginauthfailed', 'auth_onelogin_saml', '', (!empty($saml_user['username']) ? $saml_user['username'] : $saml_user['email']));
+		exit();
 	}
 
 	// complete the user login sequence
