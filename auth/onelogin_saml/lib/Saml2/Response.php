@@ -222,12 +222,15 @@ class OneLogin_Saml2_Response
                 // Check destination
                 if ($this->document->documentElement->hasAttribute('Destination')) {
                     $destination = trim($this->document->documentElement->getAttribute('Destination'));
+/*
                     if (empty($destination)) {
                         throw new OneLogin_Saml2_ValidationError(
                             "The response has an empty Destination value",
                             OneLogin_Saml2_ValidationError::EMPTY_DESTINATION
                         );
                     } else {
+*/
+                    if (!empty($destination)) {
                         if (strpos($destination, $currentURL) !== 0) {
                             $currentURLNoRouted = OneLogin_Saml2_Utils::getSelfURLNoQuery();
 
@@ -1001,7 +1004,7 @@ class OneLogin_Saml2_Response
 
                 if (strpos($encryptedAssertion->tagName, 'saml2:') !== false) {
                     $ns = 'xmlns:saml2';
-                } else if (strpos($encryptedAssertion->tagName, 'saml:') != false) {
+                } else if (strpos($encryptedAssertion->tagName, 'saml:') !== false) {
                     $ns = 'xmlns:saml';
                 } else {
                     $ns = 'xmlns';

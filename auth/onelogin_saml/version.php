@@ -5,7 +5,7 @@
  * 
  * @originalauthor OneLogin, Inc
  * @author Harrison Horowitz, Sixto Martin
- * @version 2.4.0
+ * @version 2.4.1
  * @license http://www.gnu.org/copyleft/gpl.html GNU Public License
  * @package auth/onelogin_saml
  * @requires XMLSecLibs v2.0.0-mod
@@ -32,7 +32,7 @@
  */
 
     $plugin->component = 'auth_onelogin_saml';
-    $plugin->version   = 2017011301;  // The current module version (Date: YYYYMMDDXX)
+    $plugin->version   = 2017013101;  // The current module version (Date: YYYYMMDDXX)
     $plugin->requires  = 2013012801;
     $plugin->cron      = 0;           // Period for cron to check this module (secs)
     $plugin->maturity  = MATURITY_STABLE;

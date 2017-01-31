@@ -5,7 +5,7 @@
  * 
  * @originalauthor OneLogin, Inc
  * @author Harrison Horowitz, Sixto Martin
- * @version 2.4.0
+ * @version 2.4.1
  * @license http://www.gnu.org/copyleft/gpl.html GNU Public License
  * @package auth/onelogin_saml
  * @requires XMLSecLibs v2.0.0-mod
@@ -138,7 +138,7 @@
 			}
 
 			$auths = $authsenabled;
-			$user = new object();
+			$user = new stdClass();
 			$user->id = 0;     // User does not exist
 		}
 
