@@ -36,6 +36,10 @@
 	// do the normal Moodle bootstraping so we have access to all config and the DB
 	require_once('../../config.php');
 
+    $context = context_system::instance();
+    $PAGE->set_url('/auth/onelogin_saml/index.php');
+    $PAGE->set_context($context);
+
 	require_once('functions.php');
 
 	global $CFG, $USER, $SESSION, $_POST, $_GET, $_SERVER;
