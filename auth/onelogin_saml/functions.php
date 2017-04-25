@@ -5,11 +5,11 @@
  * 
  * @originalauthor OneLogin, Inc
  * @author Harrison Horowitz, Sixto Martin
- * @version 2.4.1
+ * @version 2.4.2
  * @license http://www.gnu.org/copyleft/gpl.html GNU Public License
  * @package auth/onelogin_saml
  * @requires XMLSecLibs v2.0.0-mod
- * @requires php-saml v2.10.3
+ * @requires php-saml v2.10.5
  * @copyright 2011-2017 OneLogin.com
  * 
  * @description 
@@ -76,6 +76,7 @@
 				'wantMessagesSigned' => isset($pluginconfig->saml_want_message_signed) && $pluginconfig->saml_want_message_signed == 'on'? true: false,
 				'wantAssertionsSigned' => isset($pluginconfig->saml_want_assertion_signed) && $pluginconfig->saml_want_assertion_signed == 'on'? true: false,
 				'wantAssertionsEncrypted' => isset($pluginconfig->saml_want_assertion_encrypted) && $pluginconfig->saml_want_assertion_encrypted == 'on'? true: false,
+				'relaxDestinationValidation' => true
 			)
 		);
 

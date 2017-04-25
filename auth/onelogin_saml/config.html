@@ -5,11 +5,11 @@
  * 
  * @originalauthor OneLogin, Inc
  * @author Harrison Horowitz, Sixto Martin
- * @version 2.4.1
+ * @version 2.4.2
  * @license http://www.gnu.org/copyleft/gpl.html GNU Public License
  * @package auth/onelogin_saml
  * @requires XMLSecLibs v2.0.0-mod
- * @requires php-saml v2.10.3
+ * @requires php-saml v2.10.5
  * @copyright 2011-2017 OneLogin.com
  * 
  * @description 
@@ -57,25 +57,6 @@
     }
     if (!isset($config->saml_account_matcher)) {
         $config->saml_account_matcher = '';
-    }
-
-    if (!isset($config->saml_username_map)) {
-        $config->saml_username_map = '';
-    }
-    if (!isset($config->saml_email_map)) {
-        $config->saml_email_map = '';
-    }    
-    if (!isset($config->saml_firstname_map)) {
-        $config->saml_firstname_map = '';
-    }
-    if (!isset($config->saml_surname_map)) {
-        $config->saml_surname_map = '';
-    }
-    if (!isset($config->saml_idnumber_map)) {
-        $config->saml_idnumber_map = '';
-    }
-    if (!isset($config->saml_role_map)) {
-        $config->saml_role_map = '';
     }
 
     if (!isset($config->saml_role_siteadmin_map)) {
@@ -132,9 +113,15 @@
     }
 
     if (!empty($err)) {
-        echo '<div id="saml_errors" style="position:absolute;color:red;font-weight:bolder;top:0;padding-top:38px;padding-left:10px;">';
+        echo '<div id="saml_errors" style="position:absolute;color:red;font-weight:bolder;top:10px;right:10px;padding-top:38px;padding-left:10px;">';
         print_string('auth_onelogin_saml_form_has_errors','auth_onelogin_saml');
         echo ' !!</div>';
+        echo '<div style="color:red;font-weight:bolder;">';
+        foreach($err as $e) {
+            echo $e.'<br>';
+        }
+
+        echo '</div>';
     }
 
     $posible_nameidformat_values = array(
@@ -146,7 +133,7 @@
         'urn:oasis:names:tc:SAML:2.0:nameid-format:encrypted',
         'urn:oasis:names:tc:SAML:2.0:nameid-format:kerberos',
         'urn:oasis:names:tc:SAML:1.1:nameid-format:X509SubjectName',
-         'urn:oasis:names:tc:SAML:1.1:nameid-format:WindowsDomainQualifiedName'
+        'urn:oasis:names:tc:SAML:1.1:nameid-format:WindowsDomainQualifiedName'
     );
 ?>
 
@@ -254,63 +241,13 @@ if (isset($err['idp_sso_target_url_empty'])) {
     <p><?php print_string("auth_onelogin_saml_attrmapping_head", "auth_onelogin_saml"); ?></p>    
     </td>
 </tr>
-<?php
-if (isset($err['saml_username_map_empty'])) {
-    echo '<tr valign="top"><td></td><td style="color:red;font-weight:bolder;">'.$err['saml_username_map_empty'].'</td></tr>';
-}
-?>
-<tr valign="top">
-    <td align="right" style="font-size:12px; font-weight:bold;min-width: 180px;"><?php print_string("auth_onelogin_saml_username_map", "auth_onelogin_saml"); ?>:</td>
-    <td>
-        <input name="saml_username_map" type="text" value="<?php if ($config->saml_username_map) echo $config->saml_username_map; ?>" style="color:blue; width:150px; " />
-    </td>
-</tr>
-<?php
-if (isset($err['saml_email_map_empty'])) {
-    echo '<tr valign="top"><td></td><td style="color:red;font-weight:bolder;">'.$err['saml_email_map_empty'].'</td></tr>';
-}
-?>
-<tr valign="top">
-    <td align="right" style="font-size:12px; font-weight:bold;min-width: 180px;"><?php print_string("auth_onelogin_saml_email_map", "auth_onelogin_saml"); ?>:</td>
-    <td>
-        <input name="saml_email_map" type="text" value="<?php if ($config->saml_email_map) echo $config->saml_email_map; ?>" style="color:blue; width:150px; " />
-    </td>
-</tr>
-<?php
-if (isset($err['saml_firstname_map_empty'])) {
-    echo '<tr valign="top"><td></td><td style="color:red;font-weight:bolder;">'.$err['saml_firstname_map_empty'].'</td></tr>';
-}
-?>
-<tr valign="top">
-    <td align="right" style="font-size:12px; font-weight:bold;min-width: 180px;"><?php print_string("auth_onelogin_saml_firstname_map", "auth_onelogin_saml"); ?>:</td>
-    <td>
-        <input name="saml_firstname_map" type="text" value="<?php if ($config->saml_firstname_map) echo $config->saml_firstname_map; ?>" style="color:blue; width:150px; " />
-    </td>
-</tr>
-<?php
-if (isset($err['saml_surname_map_empty'])) {
-    echo '<tr valign="top"><td></td><td style="color:red;font-weight:bolder;">'.$err['saml_surname_map_empty'].'</td></tr>';
-}
-?>
-<tr valign="top">
-    <td align="right" style="font-size:12px; font-weight:bold;min-width: 180px;"><?php print_string("auth_onelogin_saml_surname_map", "auth_onelogin_saml"); ?>:</td>
-    <td>
-        <input name="saml_surname_map" type="text" value="<?php if ($config->saml_surname_map) echo $config->saml_surname_map; ?>" style="color:blue; width:150px; " />
-    </td>
-</tr>
-<tr valign="top">
-    <td align="right" style="font-size:12px; font-weight:bold;min-width: 180px;"><?php print_string("auth_onelogin_saml_idnumber_map", "auth_onelogin_saml"); ?>:</td>
-    <td>
-        <input name="saml_idnumber_map" type="text" value="<?php if ($config->saml_idnumber_map) echo $config->saml_idnumber_map; ?>" style="color:blue; width:150px; " />
-    </td>
-</tr>
-<tr valign="top">
-    <td align="right" style="font-size:12px; font-weight:bold;min-width: 180px;"><?php print_string("auth_onelogin_saml_role_map", "auth_onelogin_saml"); ?>:</td>
-    <td>
-        <input name="saml_role_map" type="text" value="<?php if ($config->saml_role_map) echo $config->saml_role_map; ?>" style="color:blue; width:150px; " />
-    </td>
-</tr>
 
+<?php
+    $custom_fields = array ('username', 'email', 'firstname', 'lastname', 'idnumber', 'role', 'city', 'country', 'institution', 'department', 'phone1', 'phone2', 'address', 'middlename'
+            );
+
+    print_auth_lock_options('onelogin_saml', $custom_fields, null, true, false);
+?>
 <tr><td colspan="2">
     <h1>ROLE MAPPING</h1>
     <p><?php print_string("auth_onelogin_saml_rolemapping_head", "auth_onelogin_saml"); ?></p>    
