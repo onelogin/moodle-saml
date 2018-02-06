@@ -5,12 +5,12 @@
  * 
  * @originalauthor OneLogin, Inc
  * @author Harrison Horowitz, Sixto Martin
- * @version 2.2.0
+ * @version 2.4.2
  * @license http://www.gnu.org/copyleft/gpl.html GNU Public License
  * @package auth/onelogin_saml
  * @requires XMLSecLibs v2.0.0-mod
- * @requires php-saml v2.9.0
- * @copyright 2011-2016 OneLogin.com
+ * @requires php-saml v2.10.5
+ * @copyright 2011-2017 OneLogin.com
  * 
  * @description 
  * Connects to Moodle, builds the configuration, discovers SAML status, and handles the login process accordingly.
@@ -31,23 +31,26 @@
  * 
  */
 
-	global $CFG, $USER, $SESSION, $POST, $_POST, $_GET, $_SERVER, $DB, $SITE;
-
-	define('AUTH_ONELOGIN_SAML_RETRIES', 10);
+	define('AUTH_ONELOGIN_SAML_RETRIES', 100);
 
 	// do the normal Moodle bootstraping so we have access to all config and the DB
 	require_once('../../config.php');
 
+    $context = context_system::instance();
+    $PAGE->set_url('/auth/onelogin_saml/index.php');
+    $PAGE->set_context($context);
+
 	require_once('functions.php');
 
+	global $CFG, $USER, $SESSION, $_POST, $_GET, $_SERVER;
 
 	// Normal form failed
 	if (isset($_GET['errorcode']) && $_GET['errorcode'] != 4) {
-		$location = $CFG->wwwroot.'/login/index.php?normal&errorcode='.$_GET['errorcode'];
+		$errorCode = clean_param($_GET['errorcode'] , PARAM_INT);
+		$location = $CFG->wwwroot.'/login/index.php?normal&errorcode='.$errorCode;
 		header('Location: '.$location);
 		exit();
 	}
-
 
 	/**
 	 * check that the saml session is OK - if not, send to OneLogin for authentication
@@ -60,13 +63,14 @@
 		// too many tries at logging in
 		session_write_close();
 		print_error('retriesexceeded', 'auth_onelogin_saml', '', $retry);
+		exit();
 	}
 
 	$SESSION->saml_retry_count = $retry + 1;
 
 	// save the jump target - this is checked later that it starts with $CFG->wwwroot, and cleaned
 	if (isset($_GET['wantsurl'])) {
-		$wantsurl = $SESSION->wantsurl = $_GET['wantsurl'];
+		$wantsurl = $SESSION->wantsurl = clean_param($_GET['wantsurl'], PARAM_URL);
 	}
 
 	// check for a wantsurl in the existing Moodle session 
@@ -84,9 +88,9 @@
 	$settings = auth_onelogin_saml_get_settings();
 	$auth = new Onelogin_Saml2_Auth($settings);
 
-	if (isset($_GET['logout']) && $_GET['logout']) {
+	if ($logoutActived) {
 		if (isset($_GET['RelayState']) && !empty($_GET['RelayState'])) {
-			$location = $_GET['RelayState'];
+			$location = clean_param($_GET['RelayState'], PARAM_URL);
 		}
 		else if (isset($wantsurl)) {
 			$location = $wantsurl;
@@ -111,12 +115,30 @@
 					auth_onelogin_saml_deleteLocalSession();
 				}
 				else {
-					print_r(implode(', ', $errors).'<br><br>'.$auth->getLastErrorReason());
+					print_error('auth_onelogin_saml: '.implode(', ', $errors).'<br><br>'.$auth->getLastErrorReason());
 					exit();
 				}
 			}
 			else {
 				if ($pluginconfig->saml_slo) {
+				/*
+					// Here the session is already closed so can't retrieve
+					// the data that was stored.
+
+					$nameid = $sessionIndex = $nameIdFormat = null;
+
+					if (isset($SESSION->onelogin_saml_nameID)) {
+						$nameid = $SESSION->onelogin_saml_nameID;
+					}
+					if (isset($SESSION->onelogin_saml_session_index)) {
+						$sessionIndex = $SESSION->onelogin_saml_session_index;
+					}
+					if (isset($SESSION->onelogin_saml_nameid_format)) {
+						$nameIdFormat = $SESSION->onelogin_saml_nameid_format;
+					}
+
+					$auth->logout($location, array(), $nameid, $sessionIndex, false, $nameIdFormat);
+				*/
 					$auth->logout($location);
 					exit();
 				}
@@ -125,98 +147,99 @@
 		if($pluginconfig->saml_logout_redirect_url){
 			$location = $pluginconfig->saml_logout_redirect_url;
 		}
+
 		header('Location: '.$location);
 		exit();
-	}
-
-	if (!isset($_POST['SAMLResponse']) && !$normalActived && !$normalSessionActivated && !$logoutActived) {
-		$auth->login();
-	} else if (isset($_POST['SAMLResponse']) && $_POST['SAMLResponse'] && !$normalActived && !$normalSessionActivated && !$logoutActived) {
-		try {
-			$auth->processResponse();
-			$errors = $auth->getErrors();
-			if (empty($errors)) {
-				$SESSION->onelogin_saml_nameID = $onelogin_saml_nameId = $auth->getNameId();
-				$SESSION->onelogin_saml_login_attributes = $saml_attributes = $auth->getAttributes();
-				$wantsurl = isset($SESSION->wantsurl) ? $SESSION->wantsurl : FALSE;
-			} else {
-				print_error("An invalid SAML response was received from the Identity Provider. Contact the admin.");
-				if ($pluginconfig->saml_debug_mode) {
-					print_error(implode(', ', $errors).'<br><br>'.$auth->getLastErrorReason());
-				}
-				exit();
-			}
-		} catch (Exception $e) {
-			print_error("An invalid SAML response was received from the Identity Provider. Contact the admin.");
-			if ($pluginconfig->saml_debug_mode) {
-				print_error($e->getMessage());
-			}
-			exit();
-		}		
 	} else {
-		// You shouldn't be able to reach here.
-		print_error("Module Setup Error: Review the OneLogin setup instructions for the SAML authentication module, and be sure to change the following one line of code in Moodle's core in 'login/index.php'.<br /><br /><div style=\"text-align:center;\">CHANGE THE FOLLOWING LINE OF CODE (in 'login/index.php')...</div><br /><font style=\"font-size:18px;\"><strong>if (!empty(\$CFG->alternateloginurl)) {</strong></font><br /><br /><div style=\"text-align:center;\">...to...</div><br /><strong><font style=\"font-size:18px;\">if (!empty(\$CFG->alternateloginurl) && !isset(\$_GET['normal'])) { </font></strong> \r\n");
-	}
+		if (!isset($_POST['SAMLResponse']) && !$normalActived && !$normalSessionActivated && !$logoutActived) {
+			$auth->login();
+		} else if (isset($_POST['SAMLResponse']) && $_POST['SAMLResponse'] && !$normalActived && !$normalSessionActivated && !$logoutActived) {
+			try {
+				$auth->processResponse();
+				$errors = $auth->getErrors();
+				if (empty($errors)) {
+					$SESSION->onelogin_saml_nameID = $onelogin_saml_nameId = $auth->getNameId();
+					$SESSION->onelogin_saml_login_attributes = $saml_attributes = $auth->getAttributes();
+					$wantsurl = isset($SESSION->wantsurl) ? $SESSION->wantsurl : FALSE;
 
-	// Valid session. Register or update user in Moodle, log him on, and redirect to Moodle front
-	// we require the plugin to know that we are now doing a saml login in hook puser_login
-	$SESSION->onelogin_saml_login = TRUE;
-
-	$samlplugin = get_auth_plugin('onelogin_saml');
-	$saml_user = $samlplugin->get_userinfo(null);
-
-	// check user name attribute actually passed
-	if($saml_user == false){
-		error_log('auth_onelogin_saml: auth failed due to missing username/email saml attribute: '.$pluginconfig->saml_username_map);
-		session_write_close();
-		$USER = new object();
-		$USER->id = 0;
-		require_once('../../config.php');
-		print_error('auth_onelogin_saml: auth failed due to missing username/email saml attribute: '.$pluginconfig->saml_username_map."<br />".get_string("auth_onelogin_saml_username_email_error", "auth_onelogin_saml")."\r\n");
-	}
-
-
-	if ($_POST['SAMLResponse']) {
-		$saml_account_matcher = $pluginconfig->saml_account_matcher;
-		if (empty($saml_account_matcher)) {
-			$saml_account_matcher = 'username';
+					// Valid session. Register or update user in Moodle, log him on, and redirect to Moodle front
+					// we require the plugin to know that we are now doing a saml login in hook puser_login
+					$SESSION->onelogin_saml_login = TRUE;
+				} else {
+					$errorMsg = "auth_onelogin_saml: An invalid SAML response was received from the Identity Provider. Contact the admin.";
+					if ($pluginconfig->saml_debug_mode) {
+						$errorMsg .= "<br>".implode(', ', $errors).'<br><br>'.$auth->getLastErrorReason();
+					}
+				}
+			} catch (Exception $e) {
+				$errorMsg = "auth_onelogin_saml: An invalid SAML response was received from the Identity Provider. Contact the admin.";
+				if ($pluginconfig->saml_debug_mode) {
+					$errorMsg .= "<br>".$e->getMessage();
+				}			
+			}		
+		} else {
+			// You shouldn't be able to reach here.
+			$errorMsg = "auth_onelogin_saml: Module Setup Error: Review the OneLogin setup instructions for the SAML authentication module";
 		}
 
-		$saml_create = $pluginconfig->saml_auto_create_users == 'on'? true : false;
-		$saml_update = $pluginconfig->saml_auto_update_users == 'on'? true : false;
-		$USER = auth_onelogin_saml_authenticate_user_login($saml_account_matcher, $saml_user, $saml_create, $saml_update);
-	} else {
-		print_error("Info received. Finishing authentication process through regular method hook because no SAML response detected.");
-		display_object($_POST);
-		$USER = authenticate_user_login($saml_user[$saml_account_matcher], time());
+		if (!isset($errorMsg)) {
+			$samlplugin = get_auth_plugin('onelogin_saml');
+			$saml_user = $samlplugin->get_userinfo(null);
+
+			// check user name attribute actually passed
+			if($saml_user !== false){
+				if ($_POST['SAMLResponse']) {
+					$saml_account_matcher = $pluginconfig->saml_account_matcher;
+					if (empty($saml_account_matcher)) {
+						$saml_account_matcher = 'username';
+					}
+
+					$saml_create = $pluginconfig->saml_auto_create_users == 'on'? true : false;
+					$saml_update = $pluginconfig->saml_auto_update_users == 'on'? true : false;
+					$USER = auth_onelogin_saml_authenticate_user_login($saml_account_matcher, $saml_user, $saml_create, $saml_update);
+				
+					// check that the signin worked
+					if ($USER != false) {
+						// complete the user login sequence
+						$USER->loggedin = true;
+						$USER->site     = $CFG->wwwroot;
+						$USER = get_complete_user_data('id', $USER->id);
+						complete_user_login($USER);
+
+						// flag this as a SAML based login
+						$SESSION->isSAMLSessionControlled = true;
+						//$SESSION->onelogin_saml_session_index = $auth->getSessionIndex();
+						//$SESSION->onelogin_saml_nameid_format = $auth->getNameIdFormat();
+
+						if (isset($wantsurl)) {// and (strpos($wantsurl, $CFG->wwwroot) === 0)
+							$urltogo = clean_param($wantsurl, PARAM_URL);
+						} else {
+							$urltogo = $CFG->wwwroot.'/';
+						}
+
+						if (!$urltogo || $urltogo == "") {
+							$urltogo = $CFG->wwwroot.'/';
+						}
+
+						unset($SESSION->wantsurl);
+						redirect($urltogo, 0);
+					} else {
+						$errorMsg = "auth_onelogin_saml: You could not be identified or created: ".htmlspecialchars((!empty($saml_user['username']) ? $saml_user['username'] : $saml_user['email']));
+					}
+				} else {
+					$errorMsg = "auth_onelogin_saml: No SAML response detected.";
+				}
+			} else {
+				$errorMsg = 'auth_onelogin_saml: auth failed due to missing username/email saml attribute: '.$pluginconfig->saml_username_map."<br />".get_string("auth_onelogin_saml_username_email_error", "auth_onelogin_saml");
+			}
+
+			if (isset($errorMsg)) {
+				print_error($errorMsg);
+				exit();
+			}
+
+		} else {
+			print_error($errorMsg);
+			exit();
+		}
 	}
-
-	// check that the signin worked
-	if ($USER == false) {
-		print_error("You could not be identified or created. <br />Login result: FAILURE<br />I have...<br />".htmlspecialchars(print_r($USER, true)));
-		session_write_close();
-		$USER = new object();
-		$USER->id = 0;
-		require_once('../../config.php');
-		print_error('pluginauthfailed', 'auth_onelogin_saml', '', (!empty($saml_user['username']) ? $saml_user['username'] : $saml_user['email']));
-	}
-
-	// complete the user login sequence
-	$USER->loggedin = true;
-	$USER->site     = $CFG->wwwroot;
-	$USER = get_complete_user_data('id', $USER->id);
-	complete_user_login($USER);
-
-
-	// flag this as a SAML based login
-	$SESSION->isSAMLSessionControlled = true;
-	
-	if (isset($wantsurl)) {// and (strpos($wantsurl, $CFG->wwwroot) === 0)
-		$urltogo = clean_param($wantsurl, PARAM_URL);
-	} else {
-		$urltogo = $CFG->wwwroot.'/';
-	}
-	if (!$urltogo || $urltogo == "") $urltogo = $CFG->wwwroot.'/';
-
-	unset($SESSION->wantsurl);
-	redirect($urltogo, 0);

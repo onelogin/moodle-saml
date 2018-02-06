@@ -113,6 +113,8 @@
 	$string['auth_onelogin_saml_strict_mode_description'] = "If Strict mode is Enabled, then Wordpress will reject unsigned or unencrypted messages if it expects them signed or encrypted. Also will reject the messages if not strictly follow the SAML standard: Destination, NameId, Conditions ... are validated too.";
 	$string['auth_onelogin_saml_sp_entity_id'] = "Service Provider Entity Id";
 	$string['auth_onelogin_saml_sp_entity_id_description'] = "Set the Entity ID for the Service Provider. If not provided, 'moodle-php-saml' will be used.<br>Set this value as a Valid Audience at the Onelogin Platform.";
+	$string['auth_onelogin_saml_nameid_format'] = "NameID Format";
+	$string['auth_onelogin_saml_nameid_format_description'] = "Specifies constraints on the name identifier to be used to represent the requested subject.";
 	$string['auth_onelogin_saml_nameid_encrypted'] = "Encrypt nameID";
 	$string['auth_onelogin_saml_nameid_encrypted_description'] = "The nameID sent by this SP will be encrypted.";
 	$string['auth_onelogin_saml_authn_request_signed'] = "Sign AuthnRequest";

@@ -6,12 +6,12 @@
  * 
  * @originalauthor OneLogin, Inc
  * @author Harrison Horowitz, Sixto Martin
- * @version 2.2.0
+ * @version 2.4.2
  * @license http://www.gnu.org/copyleft/gpl.html GNU Public License
  * @package auth/onelogin_saml
  * @requires XMLSecLibs v2.0.0-mod
- * @requires php-saml v2.9.0
- * @copyright 2011-2016 OneLogin.com
+ * @requires php-saml v2.10.5
+ * @copyright 2011-2017 OneLogin.com
  * 
  * @description 
  * Connects to Moodle, builds the configuration, discovers SAML status, and handles the login process accordingly.
@@ -33,29 +33,11 @@
  */
 	global $CFG;
 
-        if (strstr(strtolower(PHP_OS), 'win') && strstr(strtolower(PHP_OS), 'darwin') === false) {
-                require_once($CFG->libdir.'\authlib.php');
-        } else {
-                require_once($CFG->libdir.'/authlib.php');
-        }
-
-	set_config('field_lock_email', 'unlocked', 'auth/onelogin_saml');
-	set_config('field_updatelocal_email', 'oncreate', 'auth/onelogin_saml');
-	set_config('field_updatelocal_email', 'onlogin', 'auth/onelogin_saml');
-
-	set_config('field_lock_firstname', 'unlocked', 'auth/onelogin_saml');
-	set_config('field_updatelocal_firstname', 'oncreate', 'auth/onelogin_saml');
-	set_config('field_updatelocal_firstname', 'onlogin', 'auth/onelogin_saml');
-
-	set_config('field_lock_lastname', 'unlocked', 'auth/onelogin_saml');
-	set_config('field_updatelocal_lastname', 'oncreate', 'auth/onelogin_saml');
-	set_config('field_updatelocal_lastname', 'onlogin', 'auth/onelogin_saml');
-	
-	set_config('field_lock_idnumber', 'unlocked', 'auth/onelogin_saml');
-	set_config('field_updatelocal_idnumber', 'oncreate', 'auth/onelogin_saml');
-	set_config('field_updatelocal_idnumber', 'onlogin', 'auth/onelogin_saml');
-
-	set_config('field_updateremote_email', '0', 'auth/onelogin_saml');
+	if (strstr(strtolower(PHP_OS), 'win') && strstr(strtolower(PHP_OS), 'darwin') === false) {
+		require_once($CFG->libdir.'\authlib.php');
+	} else {
+		require_once($CFG->libdir.'/authlib.php');
+	}
 
 	//if (!defined('MOODLE_INTERNAL')) {
 	//	die('Direct access to this script is forbidden.');    ///  It must be included from a Moodle page
@@ -129,8 +111,18 @@
 				$user['email'] = $email;
 			}
 
+			$saml_account_matcher = $this->config->saml_account_matcher;
+			if (empty($saml_account_matcher)) {
+				$saml_account_matcher = 'username';
+			}
+
+			if (($saml_account_matcher == 'username' && empty($user['username']) ||
+			  ($saml_account_matcher == 'email' && empty($user['email'])))) {
+				return False;
+			}
+
 			$firstnameMapping = $mapping['firstname'];
-			$surnameMapping =  $mapping['lastname'];
+			$surnameMapping = $mapping['lastname'];
 			$idnumberMapping = $mapping['idnumber'];
 			if (!empty($firstnameMapping) && isset($saml_attributes[$firstnameMapping]) && !empty($saml_attributes[$firstnameMapping][0])){
 				$user['firstname'] = $saml_attributes[$firstnameMapping][0];
@@ -142,16 +134,44 @@
 				$user['idnumber'] = $saml_attributes[$idnumberMapping][0];
 			}
 
-			$saml_account_matcher = $this->config->saml_account_matcher;
-			if (empty($saml_account_matcher)) {
-				$saml_account_matcher = 'username';
+			//Rest of mapping
+			$cityMapping = $mapping['city'];
+			$countryMapping = $mapping['country'];
+			$institutionMapping = $mapping['institution'];
+			$departmentMapping = $mapping['department'];
+			$phone1Mapping = $mapping['phone1'];
+			$phone2Mapping = $mapping['phone2'];
+			$addressMapping = $mapping['address'];
+			$middlenameMapping = $mapping['middlename'];
+			if (!empty($cityMapping) && isset($saml_attributes[$cityMapping]) && !empty($saml_attributes[$cityMapping][0])){
+				$user['city'] = $saml_attributes[$cityMapping][0];
 			}
-
-			if (($saml_account_matcher == 'username' && empty($user['username']) ||
-			  ($saml_account_matcher == 'email' && empty($user['email'])))) {
-				$user = False;
+			if (!empty($countryMapping) && isset($saml_attributes[$countryMapping]) && !empty($saml_attributes[$countryMapping][0])){
+				$user['country'] = $saml_attributes[$countryMapping][0];
 			}
-
+			if (!empty($institutionMapping) && isset($saml_attributes[$institutionMapping]) && !empty($saml_attributes[$institutionMapping][0])){
+				$user['institution'] = $saml_attributes[$institutionMapping][0];
+			}
+			if (!empty($departmentMapping) && isset($saml_attributes[$departmentMapping]) && !empty($saml_attributes[$departmentMapping][0])){
+				$user['department'] = $saml_attributes[$departmentMapping][0];
+			}
+			if (!empty($phone1Mapping) && isset($saml_attributes[$phone1Mapping]) && !empty($saml_attributes[$phone1Mapping][0])){
+				$user['phone1'] = $saml_attributes[$phone1Mapping][0];
+			}
+			if (!empty($phone2Mapping) && isset($saml_attributes[$phone2Mapping]) && !empty($saml_attributes[$phone2Mapping][0])){
+				$user['phone2'] = $saml_attributes[$phone2Mapping][0];
+			}
+			if (!empty($addressMapping) && isset($saml_attributes[$addressMapping]) && !empty($saml_attributes[$addressMapping][0])){
+				$user['address'] = $saml_attributes[$addressMapping][0];
+			}
+			if (!empty($middlenameMapping) && isset($saml_attributes[$middlenameMapping]) && !empty($saml_attributes[$middlenameMapping][0])){
+				$user['middlename'] = $saml_attributes[$middlenameMapping][0];
+			}
+/*
+			print_r($saml_attributes);
+			echo '<br><br>';
+			print_r($user);exit();
+*/
 			return $user;
 		}
 		
@@ -161,11 +181,20 @@
 		function get_attributes() {
 
 			$moodleattributes = array (
-				"username" => $this->config->saml_username_map,
-				"email" => $this->config->saml_email_map,
-				"firstname" => $this->config->saml_firstname_map,
-				"lastname" => $this->config->saml_surname_map,
-				"idnumber" => $this->config->saml_idnumber_map,
+				"username" 		=> $this->config->field_map_username,
+				"email" 		=> $this->config->field_map_email,
+				"firstname"		=> $this->config->field_map_firstname,
+				"lastname" 		=> $this->config->field_map_lastname,
+				"idnumber" 		=> $this->config->field_map_idnumber,
+				//"role" 			=> $this->config->field_map_role,
+				"city" 			=> $this->config->field_map_city,
+				"country" 		=> $this->config->field_map_country,
+				"institution" 	=> $this->config->field_map_institution,
+				"department" 	=> $this->config->field_map_department,
+				"phone1" 		=> $this->config->field_map_phone1,
+				"phone2" 		=> $this->config->field_map_phone2,
+				"address" 		=> $this->config->field_map_address,
+				"middlename"	=> $this->config->field_map_middlename
 			);
 
 			return $moodleattributes;
@@ -180,7 +209,7 @@
 			$roles = array();
 
 			$saml_attributes = $SESSION->onelogin_saml_login_attributes;
-			$roleMapping = $this->config->saml_role_map;
+			$roleMapping = $this->config->field_map_role;
 			if (!empty($roleMapping) && isset($saml_attributes[$roleMapping]) && !empty($saml_attributes[$roleMapping])){
 				$siteadminMapping = explode(',', $this->config->saml_role_siteadmin_map);
 				$coursecreatorMapping = explode(',', $this->config->saml_role_coursecreator_map);
@@ -311,16 +340,16 @@
 
 			if (!empty($form->saml_auto_create_users) || !empty($form->saml_auto_update_users)) {
 
-				if (empty($form->saml_username_map)) {
+				if (empty($form->lockconfig_field_map_username)) {
 					$err['saml_username_map_empty'] = get_string('auth_onelogin_saml_create_or_update_warning', 'auth_onelogin_saml').' "'.get_string('auth_onelogin_saml_username_map', 'auth_onelogin_saml').'" '. get_string('auth_onelogin_saml_empty_required_value', 'auth_onelogin_saml');
 				}
-				if (empty($form->saml_email_map)) {
+				if (empty($form->lockconfig_field_map_email)) {
 					$err['saml_email_map_empty'] = get_string('auth_onelogin_saml_create_or_update_warning', 'auth_onelogin_saml').' "'.get_string('auth_onelogin_saml_email_map', 'auth_onelogin_saml').'" '. get_string('auth_onelogin_saml_empty_required_value', 'auth_onelogin_saml');
 				}
-				if (empty($form->saml_firstname_map)) {
+				if (empty($form->lockconfig_field_map_firstname)) {
 					$err['saml_firstname_map_empty'] = get_string('auth_onelogin_saml_create_or_update_warning', 'auth_onelogin_saml').' "'.get_string('auth_onelogin_saml_firstname_map', 'auth_onelogin_saml').'" '. get_string('auth_onelogin_saml_empty_required_value', 'auth_onelogin_saml');
 				}
-				if (empty($form->saml_surname_map)) {
+				if (empty($form->lockconfig_field_map_lastname)) {
 					$err['saml_surname_map_empty'] = get_string('auth_onelogin_saml_create_or_update_warning', 'auth_onelogin_saml').' "'.get_string('auth_onelogin_saml_surname_map', 'auth_onelogin_saml').'" '. get_string('auth_onelogin_saml_empty_required_value', 'auth_onelogin_saml');
 				}
 			}
@@ -359,25 +388,6 @@
 			}
 			if (!isset($config->saml_account_matcher)) {
 				$config->saml_account_matcher = '';
-			}
-
-			if (!isset($config->saml_username_map)) {
-				$config->saml_username_map = '';
-			}
-			if (!isset($config->saml_email_map)) {
-				$config->saml_email_map = '';
-			}    
-			if (!isset($config->saml_firstname_map)) {
-				$config->saml_firstname_map = '';
-			}
-			if (!isset($config->saml_surname_map)) {
-				$config->saml_surname_map = '';
-			}
-			if (!isset($config->saml_idnumber_map)) {
-				$config->saml_idnumber_map = '';
-			}
-			if (!isset($config->saml_role_map)) {
-				$config->saml_role_map = '';
 			}
 
 			if (!isset($config->saml_role_siteadmin_map)) {
@@ -420,6 +430,9 @@
 			if (!isset($config->saml_want_assertion_encrypted)) {
 				$config->saml_want_assertion_encrypted = '';
 			}
+			if (!isset($config->saml_nameid_format)) {
+				$config->saml_nameid_format = '';
+			}
 			if (!isset($config->sp_x509cert)) {
 				$config->sp_x509cert = '';
 			}
@@ -434,34 +447,29 @@
 			set_config('idp_sso_issuer_url', trim($config->idp_sso_issuer_url), 'auth/onelogin_saml');
 			set_config('idp_slo_target_url', trim($config->idp_slo_target_url), 'auth/onelogin_saml');
 			set_config('x509certificate', trim($config->x509certificate), 'auth/onelogin_saml');			
-			set_config('saml_auto_create_users',  $config->saml_auto_create_users, 'auth/onelogin_saml');
+			set_config('saml_auto_create_users', $config->saml_auto_create_users, 'auth/onelogin_saml');
 
-			set_config('saml_auto_update_users',  $config->saml_auto_update_users, 'auth/onelogin_saml');
-			set_config('saml_slo',  $config->saml_slo, 'auth/onelogin_saml');
-			set_config('saml_account_matcher',  $config->saml_account_matcher, 'auth/onelogin_saml');
-			set_config('saml_username_map',  trim($config->saml_username_map), 'auth/onelogin_saml');
-			set_config('saml_email_map',  trim($config->saml_email_map), 'auth/onelogin_saml');
-			set_config('saml_email_map',  trim($config->saml_email_map), 'auth/onelogin_saml');
-			set_config('saml_firstname_map',  trim($config->saml_firstname_map), 'auth/onelogin_saml');
-			set_config('saml_surname_map',  trim($config->saml_surname_map), 'auth/onelogin_saml');
-			set_config('saml_idnumber_map',  trim($config->saml_idnumber_map), 'auth/onelogin_saml');
-			set_config('saml_role_map',  trim($config->saml_role_map), 'auth/onelogin_saml');
-			set_config('saml_role_siteadmin_map',  trim($config->saml_role_siteadmin_map), 'auth/onelogin_saml');
-			set_config('saml_role_coursecreator_map',  trim($config->saml_role_coursecreator_map), 'auth/onelogin_saml');
-			set_config('saml_role_manager_map',  trim($config->saml_role_manager_map), 'auth/onelogin_saml');
-			set_config('saml_debug_mode',  $config->saml_debug_mode, 'auth/onelogin_saml');
-			set_config('saml_strict_mode',  $config->saml_strict_mode, 'auth/onelogin_saml');
-			set_config('sp_entity_id',  trim($config->sp_entity_id), 'auth/onelogin_saml');
-			set_config('saml_nameid_encrypted',  $config->saml_nameid_encrypted, 'auth/onelogin_saml');
-			set_config('saml_authn_request_signed',  $config->saml_authn_request_signed, 'auth/onelogin_saml');
-			set_config('saml_logout_request_signed',  $config->saml_logout_request_signed, 'auth/onelogin_saml');
-			set_config('saml_logout_response_signed',  $config->saml_logout_response_signed, 'auth/onelogin_saml');
-			set_config('saml_want_message_signed',  $config->saml_want_message_signed, 'auth/onelogin_saml');
-			set_config('saml_want_assertion_signed',  $config->saml_want_assertion_signed, 'auth/onelogin_saml');
-			set_config('saml_want_assertion_encrypted',  $config->saml_want_assertion_encrypted, 'auth/onelogin_saml');
-			set_config('sp_x509cert',  trim($config->sp_x509cert), 'auth/onelogin_saml');
-			set_config('sp_privatekey',  trim($config->sp_privatekey), 'auth/onelogin_saml');
-			set_config('saml_logout_redirect_url',  trim($config->saml_logout_redirect_url), 'auth/onelogin_saml');
+			set_config('saml_auto_update_users', $config->saml_auto_update_users, 'auth/onelogin_saml');
+			set_config('saml_slo', $config->saml_slo, 'auth/onelogin_saml');
+			set_config('saml_account_matcher', $config->saml_account_matcher, 'auth/onelogin_saml');
+
+			set_config('saml_role_siteadmin_map', trim($config->saml_role_siteadmin_map), 'auth/onelogin_saml');
+			set_config('saml_role_coursecreator_map', trim($config->saml_role_coursecreator_map), 'auth/onelogin_saml');
+			set_config('saml_role_manager_map', trim($config->saml_role_manager_map), 'auth/onelogin_saml');
+			set_config('saml_debug_mode', $config->saml_debug_mode, 'auth/onelogin_saml');
+			set_config('saml_strict_mode', $config->saml_strict_mode, 'auth/onelogin_saml');
+			set_config('sp_entity_id', trim($config->sp_entity_id), 'auth/onelogin_saml');
+			set_config('saml_nameid_encrypted', $config->saml_nameid_encrypted, 'auth/onelogin_saml');
+			set_config('saml_authn_request_signed', $config->saml_authn_request_signed, 'auth/onelogin_saml');
+			set_config('saml_logout_request_signed', $config->saml_logout_request_signed, 'auth/onelogin_saml');
+			set_config('saml_logout_response_signed', $config->saml_logout_response_signed, 'auth/onelogin_saml');
+			set_config('saml_want_message_signed', $config->saml_want_message_signed, 'auth/onelogin_saml');
+			set_config('saml_want_assertion_signed', $config->saml_want_assertion_signed, 'auth/onelogin_saml');
+			set_config('saml_want_assertion_encrypted', $config->saml_want_assertion_encrypted, 'auth/onelogin_saml');
+			set_config('saml_nameid_format', $config->saml_nameid_format, 'auth/onelogin_saml');
+			set_config('sp_x509cert', trim($config->sp_x509cert), 'auth/onelogin_saml');
+			set_config('sp_privatekey', trim($config->sp_privatekey), 'auth/onelogin_saml');
+			set_config('saml_logout_redirect_url', trim($config->saml_logout_redirect_url), 'auth/onelogin_saml');
 
 			return true;
 		}
@@ -530,12 +538,12 @@
 			}
 
 			$attr_mappings = array (
-				'saml_username_map' => get_string("auth_onelogin_saml_username_map", "auth_onelogin_saml"),
-				'saml_email_map' => get_string("auth_onelogin_saml_email_map", "auth_onelogin_saml"),
-				'saml_firstname_map' => get_string("auth_onelogin_saml_firstname_map", "auth_onelogin_saml"),
-				'saml_surname_map' => get_string("auth_onelogin_saml_surname_map", "auth_onelogin_saml"),
-				'saml_idnumber_map' => get_string("auth_onelogin_saml_idnumber_map", "auth_onelogin_saml"),
-				'saml_role_map' => get_string("auth_onelogin_saml_role_map", "auth_onelogin_saml"),
+				'field_map_username' => get_string("auth_onelogin_saml_username_map", "auth_onelogin_saml"),
+				'field_map_email' => get_string("auth_onelogin_saml_email_map", "auth_onelogin_saml"),
+				'field_map_firstname' => get_string("auth_onelogin_saml_firstname_map", "auth_onelogin_saml"),
+				'field_map_lastname' => get_string("auth_onelogin_saml_surname_map", "auth_onelogin_saml"),
+				'field_map_idnumber' => get_string("auth_onelogin_saml_idnumber_map", "auth_onelogin_saml"),
+				'field_map_role' => get_string("auth_onelogin_saml_role_map", "auth_onelogin_saml"),
 			);
 
 			$saml_account_matcher = $pluginconfig->saml_account_matcher;
@@ -547,10 +555,10 @@
 			foreach ($attr_mappings as $field => $name) {
 				$value = $pluginconfig->{"$field"};
 				if (empty($value)) {
-					if ($saml_account_matcher == 'username' && $field == 'saml_username_map') {
+					if ($saml_account_matcher == 'username' && $field == 'field_map_username') {
 						echo $OUTPUT->notification("Username mapping is required in order to enable the SAML Single Sign On", 'userinfobox notifyproblem');
 					}
-					if ($saml_account_matcher == 'email' && $field == 'saml_email_map') {
+					if ($saml_account_matcher == 'email' && $field == 'field_map_email') {
 						echo $OUTPUT->notification("Email Address mapping is required in order to enable the SAML Single Sign On", 'userinfobox notifyproblem');
 					}
 					$lacked_attr_mappings[] = $name;
@@ -564,7 +572,7 @@
 			$role_mappings = array (
 				'saml_role_siteadmin_map' => get_string("auth_onelogin_saml_rolemapping_head", "auth_onelogin_saml"),
 				'saml_role_coursecreator_map' => get_string("auth_onelogin_saml_role_coursecreator_map", "auth_onelogin_saml"),
-				'saml_role_manager_map' => get_string("auth_onelogin_saml_role_manager_map", "auth_onelogin_saml"),				
+				'saml_role_manager_map' => get_string("auth_onelogin_saml_role_manager_map", "auth_onelogin_saml"),
 			);
 
 			$lacked_role_mappings = array();

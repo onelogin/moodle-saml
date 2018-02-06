@@ -5,12 +5,12 @@
  * 
  * @originalauthor OneLogin, Inc
  * @author Harrison Horowitz, Sixto Martin
- * @version 2.2.0
+ * @version 2.4.2
  * @license http://www.gnu.org/copyleft/gpl.html GNU Public License
  * @package auth/onelogin_saml
  * @requires XMLSecLibs v2.0.0-mod
- * @requires php-saml v2.9.0
- * @copyright 2011-2016 OneLogin.com
+ * @requires php-saml v2.10.5
+ * @copyright 2011-2017 OneLogin.com
  * 
  * @description 
  * Connects to Moodle, builds the configuration, discovers SAML status, and handles the login process accordingly.
@@ -43,8 +43,8 @@
 		$pluginconfig = get_config('auth/onelogin_saml');
 
 		$settings = array (
-			'strict' => ($pluginconfig->saml_strict_mode == 'on')? true: false,
-			'debug' =>  ($pluginconfig->saml_debug_mode == 'on')? true: false,
+			'strict' => (isset($pluginconfig->saml_strict_mode) && $pluginconfig->saml_strict_mode == 'on')? true: false,
+			'debug' =>  (isset($pluginconfig->saml_debug_mode) && $pluginconfig->saml_debug_mode == 'on')? true: false,
 			'idp' => array (
 				'entityId' => isset($pluginconfig->idp_sso_issuer_url) ? $pluginconfig->idp_sso_issuer_url : '',
 				'singleSignOnService' => array (
@@ -63,19 +63,20 @@
 				'singleLogoutService' => array (
 					'url' => htmlspecialchars($CFG->wwwroot.'/auth/onelogin_saml/index.php?logout=1'),
 				),
-				'NameIDFormat' => 'urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress',
+				'NameIDFormat' => (!empty($pluginconfig->saml_nameid_format))? $pluginconfig->saml_nameid_format: 'urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress',
 				'x509cert' => (!empty($pluginconfig->sp_x509cert))? $pluginconfig->sp_x509cert:'',
 				'privateKey' => (!empty($pluginconfig->sp_privatekey))? $pluginconfig->sp_privatekey:'',
 			),
 			'security' => array (
 				'signMetadata' => false,
-				'nameIdEncrypted' => $pluginconfig->saml_nameid_encrypted == 'on'? true: false,
-				'authnRequestsSigned' => $pluginconfig->saml_authn_request_signed == 'on'? true: false,
-				'logoutRequestSigned' => $pluginconfig->saml_logout_request_signed == 'on'? true: false,
-				'logoutResponseSigned' => $pluginconfig->saml_logout_response_signed == 'on'? true: false,
-				'wantMessagesSigned' => $pluginconfig->saml_want_message_signed == 'on'? true: false,
-				'wantAssertionsSigned' => $pluginconfig->saml_want_assertion_signed == 'on'? true: false,
-				'wantAssertionsEncrypted' => $pluginconfig->saml_want_assertion_encrypted == 'on'? true: false,
+				'nameIdEncrypted' => isset($pluginconfig->saml_nameid_encrypted) && $pluginconfig->saml_nameid_encrypted == 'on'? true: false,
+				'authnRequestsSigned' => isset($pluginconfig->saml_authn_request_signed) && $pluginconfig->saml_authn_request_signed == 'on'? true: false,
+				'logoutRequestSigned' => isset($pluginconfig->saml_logout_request_signed) && $pluginconfig->saml_logout_request_signed == 'on'? true: false,
+				'logoutResponseSigned' => isset($pluginconfig->saml_logout_response_signed) && $pluginconfig->saml_logout_response_signed == 'on'? true: false,
+				'wantMessagesSigned' => isset($pluginconfig->saml_want_message_signed) && $pluginconfig->saml_want_message_signed == 'on'? true: false,
+				'wantAssertionsSigned' => isset($pluginconfig->saml_want_assertion_signed) && $pluginconfig->saml_want_assertion_signed == 'on'? true: false,
+				'wantAssertionsEncrypted' => isset($pluginconfig->saml_want_assertion_encrypted) && $pluginconfig->saml_want_assertion_encrypted == 'on'? true: false,
+				'relaxDestinationValidation' => true
 			)
 		);
 
@@ -121,8 +122,9 @@
 		if ($user = get_complete_user_data($saml_account_matcher, $user_saml[$saml_account_matcher])) {
 			$auth = empty($user->auth) ? 'manual' : $user->auth;  // use manual if auth not set
 			if ($auth=='nologin' or !is_enabled_auth($auth)) {
-				add_to_log(0, 'login', 'error', 'index.php', $user_saml[$saml_account_matcher]);
-				print_error('[client '.getremoteaddr().'] '.$CFG->wwwroot.'  ---&gt;  DISABLED LOGIN: '.$user_saml[$saml_account_matcher].' '.$_SERVER['HTTP_USER_AGENT']);
+				$error_msg = '[client '.getremoteaddr().'] '.$CFG->wwwroot.'  --->  DISABLED LOGIN: '.$user_saml[$saml_account_matcher];
+				//error_log($error_msg);
+				print_error($error_msg);
 				return false;
 			}
 		} else {
@@ -130,12 +132,14 @@
 			$query_conditions[$saml_account_matcher] = $user_saml[$saml_account_matcher];
 			$query_conditions['deleted'] = 1;
 			if ($DB->get_field('user', 'id', $query_conditions)) {
-				print_error('[client '.$_SERVER['REMOTE_ADDR'].'] '.  $CFG->wwwroot.'  ---&gt;  DELETED LOGIN: '.$user_saml[$saml_account_matcher].' '.$_SERVER['HTTP_USER_AGENT']);
+				$error_msg = '[client '.$_SERVER['REMOTE_ADDR'].'] '.  $CFG->wwwroot.'  --->  DELETED LOGIN: '.$user_saml[$saml_account_matcher];
+				//error_log($error_msg);
+				print_error($error_msg);
 				return false;
 			}
 
 			$auths = $authsenabled;
-			$user = new object();
+			$user = new stdClass();
 			$user->id = 0;     // User does not exist
 		}
 
@@ -225,8 +229,8 @@
 		}
 
 		// failed if all the plugins have failed
-		add_to_log(0, 'login', 'error', 'index.php', $username);
-		print_error('[client '.getremoteaddr()."]  $CFG->wwwroot  ---&gt;  FAILED LOGIN: $username  ".$_SERVER['HTTP_USER_AGENT']);
+		error_log("SAML Error. index.php -- FAILED LOGIN". $username);
+		print_error('[client '.getremoteaddr()."]  $CFG->wwwroot  --->  FAILED LOGIN: $username  ");
 		return false;
 	}
 
