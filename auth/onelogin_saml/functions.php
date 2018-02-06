@@ -5,12 +5,12 @@
  * 
  * @originalauthor OneLogin, Inc
  * @author Harrison Horowitz, Sixto Martin
- * @version 2.4.2
+ * @version 2.4.3
  * @license http://www.gnu.org/copyleft/gpl.html GNU Public License
  * @package auth/onelogin_saml
  * @requires XMLSecLibs v2.0.0-mod
  * @requires php-saml v2.10.5
- * @copyright 2011-2017 OneLogin.com
+ * @copyright 2011-2018 OneLogin.com
  * 
  * @description 
  * Connects to Moodle, builds the configuration, discovers SAML status, and handles the login process accordingly.
@@ -40,11 +40,11 @@
 		
 		global $CFG;
 
-		$pluginconfig = get_config('auth/onelogin_saml');
+		$pluginconfig = get_config('auth_onelogin_saml');
 
 		$settings = array (
-			'strict' => (isset($pluginconfig->saml_strict_mode) && $pluginconfig->saml_strict_mode == 'on')? true: false,
-			'debug' =>  (isset($pluginconfig->saml_debug_mode) && $pluginconfig->saml_debug_mode == 'on')? true: false,
+			'strict' => (isset($pluginconfig->saml_strict_mode) && $pluginconfig->saml_strict_mode)? true: false,
+			'debug' =>  (isset($pluginconfig->saml_debug_mode) && $pluginconfig->saml_debug_mode)? true: false,
 			'idp' => array (
 				'entityId' => isset($pluginconfig->idp_sso_issuer_url) ? $pluginconfig->idp_sso_issuer_url : '',
 				'singleSignOnService' => array (
@@ -69,13 +69,13 @@
 			),
 			'security' => array (
 				'signMetadata' => false,
-				'nameIdEncrypted' => isset($pluginconfig->saml_nameid_encrypted) && $pluginconfig->saml_nameid_encrypted == 'on'? true: false,
-				'authnRequestsSigned' => isset($pluginconfig->saml_authn_request_signed) && $pluginconfig->saml_authn_request_signed == 'on'? true: false,
-				'logoutRequestSigned' => isset($pluginconfig->saml_logout_request_signed) && $pluginconfig->saml_logout_request_signed == 'on'? true: false,
-				'logoutResponseSigned' => isset($pluginconfig->saml_logout_response_signed) && $pluginconfig->saml_logout_response_signed == 'on'? true: false,
-				'wantMessagesSigned' => isset($pluginconfig->saml_want_message_signed) && $pluginconfig->saml_want_message_signed == 'on'? true: false,
-				'wantAssertionsSigned' => isset($pluginconfig->saml_want_assertion_signed) && $pluginconfig->saml_want_assertion_signed == 'on'? true: false,
-				'wantAssertionsEncrypted' => isset($pluginconfig->saml_want_assertion_encrypted) && $pluginconfig->saml_want_assertion_encrypted == 'on'? true: false,
+				'nameIdEncrypted' => isset($pluginconfig->saml_nameid_encrypted) && $pluginconfig->saml_nameid_encrypted? true: false,
+				'authnRequestsSigned' => isset($pluginconfig->saml_authn_request_signed) && $pluginconfig->saml_authn_request_signed? true: false,
+				'logoutRequestSigned' => isset($pluginconfig->saml_logout_request_signed) && $pluginconfig->saml_logout_request_signed? true: false,
+				'logoutResponseSigned' => isset($pluginconfig->saml_logout_response_signed) && $pluginconfig->saml_logout_response_signed? true: false,
+				'wantMessagesSigned' => isset($pluginconfig->saml_want_message_signed) && $pluginconfig->saml_want_message_signed? true: false,
+				'wantAssertionsSigned' => isset($pluginconfig->saml_want_assertion_signed) && $pluginconfig->saml_want_assertion_signed? true: false,
+				'wantAssertionsEncrypted' => isset($pluginconfig->saml_want_assertion_encrypted) && $pluginconfig->saml_want_assertion_encrypted? true: false,
 				'relaxDestinationValidation' => true
 			)
 		);
@@ -177,30 +177,12 @@
 						$DB->set_field('user', 'firstaccess', $user->timemodified, $query_conditions);
 						$user->firstaccess = $user->timemodified;
 					}
-					if (!empty($user_saml['username']) && $user->username != $user_saml['username']) {
-						$query_conditions['id'] = $user->id;
-						$DB->set_field('user', 'username', $user_saml['username'], $query_conditions);
-						$user->email = $user_saml['username'];
-					}					
-					if (!empty($user_saml['email'])  && $user->email != $user_saml['email']) {
-						$query_conditions['id'] = $user->id;
-						$DB->set_field('user', 'email', $user_saml['email'], $query_conditions);
-						$user->email = $user_saml['email'];
-					}
-					if (!empty($user_saml['firstname']) && $user->firstname != $user_saml['firstname']) {
-						$query_conditions['id'] = $user->id;
-						$DB->set_field('user', 'firstname', $user_saml['firstname'], $query_conditions);
-						$user->firstname = $user_saml['firstname'];
-					}
-					if (!empty($user_saml['lastname']) && $user->lastname != $user_saml['lastname']) {
-						$query_conditions['id'] = $user->id;
-						$DB->set_field('user', 'lastname', $user_saml['lastname'], $query_conditions);
-						$user->lastname = $user_saml['lastname'];
-					}
-					if (!empty($user_saml['idnumber']) && $user->idnumber != $user_saml['idnumber']) {
-						$query_conditions['id'] = $user->id;
-						$DB->set_field('user', 'idnumber', $user_saml['idnumber'], $query_conditions);
-						$user->idnumber = $user_saml['idnumber'];
+					foreach($user_saml as $ukey => $uval){
+						if (!empty($uval) && $user->{$ukey} != $uval) {
+							$query_conditions['id'] = $user->id;
+							$DB->set_field('user', $ukey, $uval, $query_conditions);
+							$user->{$ukey} = $uval;
+						}
 					}
 
 					$authplugin->sync_roles($user);
@@ -229,8 +211,8 @@
 		}
 
 		// failed if all the plugins have failed
-		error_log("SAML Error. index.php -- FAILED LOGIN". $username);
-		print_error('[client '.getremoteaddr()."]  $CFG->wwwroot  --->  FAILED LOGIN: $username  ");
+		error_log("SAML Error. index.php -- FAILED LOGIN". $user_saml["username"]);
+		print_error('[client '.getremoteaddr()."]  $CFG->wwwroot  --->  FAILED LOGIN: ".$user_saml["username"]);
 		return false;
 	}
 
