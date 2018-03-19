@@ -136,6 +136,14 @@ if ($ADMIN->fulltree) {
     $setting = new admin_setting_configtext($name, $title, $description, $default, PARAM_ALPHANUMEXT);
     $settings->add($setting);
 
+    //add role mapping
+    $name = 'auth_onelogin_saml/field_map_role';
+    $title = get_string('auth_onelogin_saml_role_map', 'auth_onelogin_saml');
+    $description = '';
+    $default = '';
+    $setting = new admin_setting_configtext($name, $title, $description, $default, PARAM_ALPHANUMEXT);
+    $settings->add($setting);
+
     /* Role Mapping */
     $settings->add(
         new admin_setting_heading(
@@ -193,7 +201,7 @@ if ($ADMIN->fulltree) {
     $title = get_string('auth_onelogin_saml_sp_entity_id', 'auth_onelogin_saml');
     $description = get_string('auth_onelogin_saml_sp_entity_id_description', 'auth_onelogin_saml');
     $default = '';
-    $setting = new admin_setting_configtext($name, $title, $description, $default, PARAM_ALPHANUMEXT);
+    $setting = new admin_setting_configtext($name, $title, $description, $default, PARAM_RAW);
     $settings->add($setting);
 
     $name = 'auth_onelogin_saml/saml_nameid_format';

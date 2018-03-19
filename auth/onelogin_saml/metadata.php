@@ -1,13 +1,14 @@
 <?php
+
+//Load Onelogin SAML libs
+require_once('_toolkit_loader.php');
+
 try {
     //Load moodle
     require_once('../../config.php');
 
     $PAGE->set_url('/auth/onelogin_saml/metadata.php');
     $PAGE->set_context(context_system::instance());
-
-    //Load Onelogin SAML libs
-    require_once '_toolkit_loader.php';
 
     require_once('functions.php');
 

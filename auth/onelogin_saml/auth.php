@@ -157,8 +157,8 @@ class auth_plugin_onelogin_saml extends auth_plugin_base {
                 }
             }
         }
-        $moodleattributes['username'] = core_text::strtolower(trim($this->config->field_map_username));
 
+        $moodleattributes['username'] = core_text::strtolower(trim($this->config->field_map_username));
         return $moodleattributes;
     }
 
