@@ -5,12 +5,12 @@
  * 
  * @originalauthor OneLogin, Inc
  * @author Harrison Horowitz, Sixto Martin
- * @version 2.4.2
+ * @version 2.4.3
  * @license http://www.gnu.org/copyleft/gpl.html GNU Public License
  * @package auth/onelogin_saml
  * @requires XMLSecLibs v2.0.0-mod
  * @requires php-saml v2.10.5
- * @copyright 2011-2017 OneLogin.com
+ * @copyright 2011-2018 OneLogin.com
  * 
  * @description 
  * Connects to Moodle, builds the configuration, discovers SAML status, and handles the login process accordingly.
@@ -83,7 +83,7 @@
 	$logoutActived = isset($_GET['logout']) && $_GET['logout'];
 
 	// get the plugin config for saml
-	$pluginconfig = get_config('auth/onelogin_saml');
+	$pluginconfig = get_config('auth_onelogin_saml');
 	require_once '_toolkit_loader.php';
 	$settings = auth_onelogin_saml_get_settings();
 	$auth = new Onelogin_Saml2_Auth($settings);
@@ -194,8 +194,8 @@
 						$saml_account_matcher = 'username';
 					}
 
-					$saml_create = $pluginconfig->saml_auto_create_users == 'on'? true : false;
-					$saml_update = $pluginconfig->saml_auto_update_users == 'on'? true : false;
+					$saml_create = $pluginconfig->saml_auto_create_users? true : false;
+					$saml_update = $pluginconfig->saml_auto_update_users? true : false;
 					$USER = auth_onelogin_saml_authenticate_user_login($saml_account_matcher, $saml_user, $saml_create, $saml_update);
 				
 					// check that the signin worked

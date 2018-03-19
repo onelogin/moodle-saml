@@ -6,12 +6,12 @@
  * 
  * @originalauthor OneLogin, Inc
  * @author Harrison Horowitz, Sixto Martin
- * @version 2.4.2
+ * @version 2.4.3
  * @license http://www.gnu.org/copyleft/gpl.html GNU Public License
  * @package auth/onelogin_saml
  * @requires XMLSecLibs v2.0.0-mod
  * @requires php-saml v2.10.5
- * @copyright 2011-2017 OneLogin.com
+ * @copyright 2011-2018 OneLogin.com
  * 
  * @description 
  * Connects to Moodle, builds the configuration, discovers SAML status, and handles the login process accordingly.
@@ -49,12 +49,24 @@
 	class auth_plugin_onelogin_saml extends auth_plugin_base {
 
 		/**
-		* Constructor.
-		*/
-		function auth_plugin_onelogin_saml() {
+        * Constructor.
+        */
+        function __construct() {
 			$this->authtype = 'onelogin_saml';
 			$this->roleauth = 'auth_onelogin_saml';
-			$this->config = get_config('auth/onelogin_saml');
+			$config = get_config('auth_onelogin_saml');
+	        $legacyconfig = get_config('auth/onelogin_saml');
+	        $this->config = (object)array_merge((array)$legacyconfig, (array)$config);
+        }
+		
+		/**
+        * Old syntax of class constructor. Deprecated in PHP7.
+        *
+        * @deprecated since Moodle 3.1
+        */
+		function auth_plugin_onelogin_saml() {			
+			debugging('Use of class name as constructor is deprecated', DEBUG_DEVELOPER);
+            self::__construct();
 		}
 
 		/**
@@ -86,29 +98,17 @@
 			$saml_attributes = $SESSION->onelogin_saml_login_attributes;
 			$nameID = $SESSION->onelogin_saml_nameID;
 			$mapping = $this->get_attributes();
-
-			if (empty($saml_attributes)) {
-				$username = $nameID;
-				$email = $username;
-			} else {
-				$usernameMapping = $mapping['username'];
-				$mailMapping =  $mapping['email'];
-
-				if (!empty($usernameMapping) && isset($saml_attributes[$usernameMapping]) && !empty($saml_attributes[$usernameMapping][0])){
-					$username = $saml_attributes[$usernameMapping][0];
-				}
-				if (!empty($mailMapping) && isset($saml_attributes[$mailMapping]) && !empty($saml_attributes[$mailMapping][0])){
-					$email = $saml_attributes[$mailMapping][0];
-				}
-			}
-
+			
 			$user = array();
-
-			if (!empty($username)) {
-				$user['username'] = $username;
-			}
-			if (!empty($email)) {
-				$user['email'] = $email;
+			if (empty($saml_attributes)) {
+				$user['username'] = $nameID;
+				$user['email'] = $user['username'];
+			} else {
+				foreach ($mapping as $key => $val) {
+		       		if(!empty($val) && isset($saml_attributes[$val]) && !empty($saml_attributes[$val][0])){
+		       			$user[$key] = $saml_attributes[$val][0];
+		       		}
+		        }
 			}
 
 			$saml_account_matcher = $this->config->saml_account_matcher;
@@ -119,53 +119,6 @@
 			if (($saml_account_matcher == 'username' && empty($user['username']) ||
 			  ($saml_account_matcher == 'email' && empty($user['email'])))) {
 				return False;
-			}
-
-			$firstnameMapping = $mapping['firstname'];
-			$surnameMapping = $mapping['lastname'];
-			$idnumberMapping = $mapping['idnumber'];
-			if (!empty($firstnameMapping) && isset($saml_attributes[$firstnameMapping]) && !empty($saml_attributes[$firstnameMapping][0])){
-				$user['firstname'] = $saml_attributes[$firstnameMapping][0];
-			}
-			if (!empty($surnameMapping) && isset($saml_attributes[$surnameMapping]) && !empty($saml_attributes[$surnameMapping][0])){
-				$user['lastname'] = $saml_attributes[$surnameMapping][0];
-			}
-			if (!empty($idnumberMapping) && isset($saml_attributes[$idnumberMapping]) && !empty($saml_attributes[$idnumberMapping][0])){
-				$user['idnumber'] = $saml_attributes[$idnumberMapping][0];
-			}
-
-			//Rest of mapping
-			$cityMapping = $mapping['city'];
-			$countryMapping = $mapping['country'];
-			$institutionMapping = $mapping['institution'];
-			$departmentMapping = $mapping['department'];
-			$phone1Mapping = $mapping['phone1'];
-			$phone2Mapping = $mapping['phone2'];
-			$addressMapping = $mapping['address'];
-			$middlenameMapping = $mapping['middlename'];
-			if (!empty($cityMapping) && isset($saml_attributes[$cityMapping]) && !empty($saml_attributes[$cityMapping][0])){
-				$user['city'] = $saml_attributes[$cityMapping][0];
-			}
-			if (!empty($countryMapping) && isset($saml_attributes[$countryMapping]) && !empty($saml_attributes[$countryMapping][0])){
-				$user['country'] = $saml_attributes[$countryMapping][0];
-			}
-			if (!empty($institutionMapping) && isset($saml_attributes[$institutionMapping]) && !empty($saml_attributes[$institutionMapping][0])){
-				$user['institution'] = $saml_attributes[$institutionMapping][0];
-			}
-			if (!empty($departmentMapping) && isset($saml_attributes[$departmentMapping]) && !empty($saml_attributes[$departmentMapping][0])){
-				$user['department'] = $saml_attributes[$departmentMapping][0];
-			}
-			if (!empty($phone1Mapping) && isset($saml_attributes[$phone1Mapping]) && !empty($saml_attributes[$phone1Mapping][0])){
-				$user['phone1'] = $saml_attributes[$phone1Mapping][0];
-			}
-			if (!empty($phone2Mapping) && isset($saml_attributes[$phone2Mapping]) && !empty($saml_attributes[$phone2Mapping][0])){
-				$user['phone2'] = $saml_attributes[$phone2Mapping][0];
-			}
-			if (!empty($addressMapping) && isset($saml_attributes[$addressMapping]) && !empty($saml_attributes[$addressMapping][0])){
-				$user['address'] = $saml_attributes[$addressMapping][0];
-			}
-			if (!empty($middlenameMapping) && isset($saml_attributes[$middlenameMapping]) && !empty($saml_attributes[$middlenameMapping][0])){
-				$user['middlename'] = $saml_attributes[$middlenameMapping][0];
 			}
 /*
 			print_r($saml_attributes);
@@ -180,24 +133,26 @@
 		*/
 		function get_attributes() {
 
-			$moodleattributes = array (
-				"username" 		=> $this->config->field_map_username,
-				"email" 		=> $this->config->field_map_email,
-				"firstname"		=> $this->config->field_map_firstname,
-				"lastname" 		=> $this->config->field_map_lastname,
-				"idnumber" 		=> $this->config->field_map_idnumber,
-				//"role" 			=> $this->config->field_map_role,
-				"city" 			=> $this->config->field_map_city,
-				"country" 		=> $this->config->field_map_country,
-				"institution" 	=> $this->config->field_map_institution,
-				"department" 	=> $this->config->field_map_department,
-				"phone1" 		=> $this->config->field_map_phone1,
-				"phone2" 		=> $this->config->field_map_phone2,
-				"address" 		=> $this->config->field_map_address,
-				"middlename"	=> $this->config->field_map_middlename
-			);
-
-			return $moodleattributes;
+			$moodleattributes = array();
+	        // If we have custom fields then merge them with user fields.
+	        $customfields = $this->get_custom_user_profile_fields();
+	        if (!empty($customfields) && !empty($this->userfields)) {
+	            $userfields = array_merge($this->userfields, $customfields);
+	        } else {
+	            $userfields = $this->userfields;
+	        }
+	
+	        foreach ($userfields as $field) {
+	            if (!empty($this->config->{"field_map_$field"})) {
+	                $moodleattributes[$field] = core_text::strtolower(trim($this->config->{"field_map_$field"}));
+	                if (preg_match('/,/', $moodleattributes[$field])) {
+	                    $moodleattributes[$field] = explode(',', $moodleattributes[$field]);
+	                }
+	            }
+	        }
+	        $moodleattributes['username'] = core_text::strtolower(trim($this->config->field_map_username));
+			
+	        return $moodleattributes;
 		}
 
 		/**
@@ -312,168 +267,6 @@
 			set_moodle_cookie('nobody');
 			redirect($logout_url);
 		}
-		
-		/**
-		* Prints a form for configuring this authentication plugin.
-		*
-		* This function is called from admin/auth.php, and outputs a full page with
-		* a form for configuring this plugin.
-		*
-		* @param array $page An object containing all the data for this page.
-		*/
-
-		function config_form($config, $err, $user_fields) {
-			include "config.html";
-		}
-
-		/**
-		 * A chance to validate form data, and last chance to
-		 * do stuff before it is inserted in config_plugin
-		 */
-		function validate_form($form, &$err) {
-			if (empty($form->idp_sso_issuer_url)) {
-				$err['idp_sso_issuer_url_empty'] = '"'.get_string('auth_onelogin_saml_idp_sso_issuer_url', 'auth_onelogin_saml').'" '. get_string('auth_onelogin_saml_empty_required_value', 'auth_onelogin_saml');
-			}
-			if (empty($form->idp_sso_target_url)) {
-				$err['idp_sso_target_url_empty'] = '"'.get_string('auth_onelogin_saml_idp_sso_target_url', 'auth_onelogin_saml').'" '. get_string('auth_onelogin_saml_empty_required_value', 'auth_onelogin_saml');
-			}
-
-			if (!empty($form->saml_auto_create_users) || !empty($form->saml_auto_update_users)) {
-
-				if (empty($form->lockconfig_field_map_username)) {
-					$err['saml_username_map_empty'] = get_string('auth_onelogin_saml_create_or_update_warning', 'auth_onelogin_saml').' "'.get_string('auth_onelogin_saml_username_map', 'auth_onelogin_saml').'" '. get_string('auth_onelogin_saml_empty_required_value', 'auth_onelogin_saml');
-				}
-				if (empty($form->lockconfig_field_map_email)) {
-					$err['saml_email_map_empty'] = get_string('auth_onelogin_saml_create_or_update_warning', 'auth_onelogin_saml').' "'.get_string('auth_onelogin_saml_email_map', 'auth_onelogin_saml').'" '. get_string('auth_onelogin_saml_empty_required_value', 'auth_onelogin_saml');
-				}
-				if (empty($form->lockconfig_field_map_firstname)) {
-					$err['saml_firstname_map_empty'] = get_string('auth_onelogin_saml_create_or_update_warning', 'auth_onelogin_saml').' "'.get_string('auth_onelogin_saml_firstname_map', 'auth_onelogin_saml').'" '. get_string('auth_onelogin_saml_empty_required_value', 'auth_onelogin_saml');
-				}
-				if (empty($form->lockconfig_field_map_lastname)) {
-					$err['saml_surname_map_empty'] = get_string('auth_onelogin_saml_create_or_update_warning', 'auth_onelogin_saml').' "'.get_string('auth_onelogin_saml_surname_map', 'auth_onelogin_saml').'" '. get_string('auth_onelogin_saml_empty_required_value', 'auth_onelogin_saml');
-				}
-			}
-		}
-
-		/**
-		* Processes and stores configuration data for this authentication plugin.
-		*
-		*
-		* @param object $config Configuration object
-		*/
-		function process_config($config) {
-
-
-			if (!isset($config->idp_sso_target_url)) {
-				$config->idp_sso_target_url = '';
-			}
-			if (!isset($config->idp_sso_issuer_url)) {
-				$config->idp_sso_issuer_url = '';
-			}
-			if (!isset($config->idp_slo_target_url)) {
-				$config->idp_slo_target_url = '';
-			}
-			if (!isset($config->x509certificate)) {
-				$config->x509certificate = '';
-			}
-
-			if (!isset($config->saml_auto_create_users)) {
-				$config->saml_auto_create_users = '';
-			}
-			if (!isset($config->saml_auto_update_users)) {
-				$config->saml_auto_update_users = '';
-			}
-			if (!isset($config->saml_slo)) {
-				$config->saml_slo = '';
-			}
-			if (!isset($config->saml_account_matcher)) {
-				$config->saml_account_matcher = '';
-			}
-
-			if (!isset($config->saml_role_siteadmin_map)) {
-				$config->saml_role_siteadmin_map = '';
-			}
-			if (!isset($config->saml_role_coursecreator_map)) {
-				$config->saml_role_coursecreator_map = '';
-			}
-			if (!isset($config->saml_role_manager_map)) {
-				$config->saml_role_manager_map = '';
-			}
-
-			if (!isset($config->saml_debug_mode)) {
-				$config->saml_debug_mode = '';
-			}
-			if (!isset($config->saml_strict_mode)) {
-				$config->saml_strict_mode = '';
-			}
-			if (!isset($config->sp_entity_id)) {
-				$config->sp_entity_id = '';
-			}
-			if (!isset($config->saml_nameid_encrypted)) {
-				$config->saml_nameid_encrypted = '';
-			}
-			if (!isset($config->saml_authn_request_signed)) {
-				$config->saml_authn_request_signed = '';
-			}
-			if (!isset($config->saml_logout_request_signed)) {
-				$config->saml_logout_request_signed = '';
-			}
-			if (!isset($config->saml_logout_response_signed)) {
-				$config->saml_logout_response_signed = '';
-			}
-			if (!isset($config->saml_want_message_signed)) {
-				$config->saml_want_message_signed = '';
-			}
-			if (!isset($config->saml_want_assertion_signed)) {
-				$config->saml_want_assertion_signed = '';
-			}
-			if (!isset($config->saml_want_assertion_encrypted)) {
-				$config->saml_want_assertion_encrypted = '';
-			}
-			if (!isset($config->saml_nameid_format)) {
-				$config->saml_nameid_format = '';
-			}
-			if (!isset($config->sp_x509cert)) {
-				$config->sp_x509cert = '';
-			}
-			if (!isset($config->sp_privatekey)) {
-				$config->sp_privatekey = '';
-			}
-			if (!isset($config->saml_logout_redirect_url)) {
-				$config->saml_logout_redirect_url = '';
-			}
-			
-			set_config('idp_sso_target_url', trim($config->idp_sso_target_url), 'auth/onelogin_saml');
-			set_config('idp_sso_issuer_url', trim($config->idp_sso_issuer_url), 'auth/onelogin_saml');
-			set_config('idp_slo_target_url', trim($config->idp_slo_target_url), 'auth/onelogin_saml');
-			set_config('x509certificate', trim($config->x509certificate), 'auth/onelogin_saml');			
-			set_config('saml_auto_create_users', $config->saml_auto_create_users, 'auth/onelogin_saml');
-
-			set_config('saml_auto_update_users', $config->saml_auto_update_users, 'auth/onelogin_saml');
-			set_config('saml_slo', $config->saml_slo, 'auth/onelogin_saml');
-			set_config('saml_account_matcher', $config->saml_account_matcher, 'auth/onelogin_saml');
-
-			set_config('saml_role_siteadmin_map', trim($config->saml_role_siteadmin_map), 'auth/onelogin_saml');
-			set_config('saml_role_coursecreator_map', trim($config->saml_role_coursecreator_map), 'auth/onelogin_saml');
-			set_config('saml_role_manager_map', trim($config->saml_role_manager_map), 'auth/onelogin_saml');
-			set_config('saml_debug_mode', $config->saml_debug_mode, 'auth/onelogin_saml');
-			set_config('saml_strict_mode', $config->saml_strict_mode, 'auth/onelogin_saml');
-			set_config('sp_entity_id', trim($config->sp_entity_id), 'auth/onelogin_saml');
-			set_config('saml_nameid_encrypted', $config->saml_nameid_encrypted, 'auth/onelogin_saml');
-			set_config('saml_authn_request_signed', $config->saml_authn_request_signed, 'auth/onelogin_saml');
-			set_config('saml_logout_request_signed', $config->saml_logout_request_signed, 'auth/onelogin_saml');
-			set_config('saml_logout_response_signed', $config->saml_logout_response_signed, 'auth/onelogin_saml');
-			set_config('saml_want_message_signed', $config->saml_want_message_signed, 'auth/onelogin_saml');
-			set_config('saml_want_assertion_signed', $config->saml_want_assertion_signed, 'auth/onelogin_saml');
-			set_config('saml_want_assertion_encrypted', $config->saml_want_assertion_encrypted, 'auth/onelogin_saml');
-			set_config('saml_nameid_format', $config->saml_nameid_format, 'auth/onelogin_saml');
-			set_config('sp_x509cert', trim($config->sp_x509cert), 'auth/onelogin_saml');
-			set_config('sp_privatekey', trim($config->sp_privatekey), 'auth/onelogin_saml');
-			set_config('saml_logout_redirect_url', trim($config->saml_logout_redirect_url), 'auth/onelogin_saml');
-
-			return true;
-		}
-		
 
 		/**
 		* Test if settings are ok, print info to output.
@@ -482,14 +275,14 @@
 		public function test_settings() {
 			global $CFG, $OUTPUT;
 
-			$pluginconfig = get_config('auth/onelogin_saml');
+			$pluginconfig = get_config('auth_onelogin_saml');
 
 			require_once 'functions.php';
 			require_once '_toolkit_loader.php';
 			$settings = auth_onelogin_saml_get_settings();
 
-			echo $OUTPUT->notification('Debug mode '. ($settings['strict']?'<strong>on</strong>. '."In production turn it off":'<strong>off</strong>'), 'userinfobox notifysuccess');
-			echo $OUTPUT->notification('Strict mode '. ($settings['debug']?'<strong>on</strong>':'<strong>off</strong>. '."In production we recommend to turn it on."), 'userinfobox notifysuccess');
+			echo $OUTPUT->notification('Debug mode '. ($settings['debug']?'<strong>on</strong>. '."In production turn it off":'<strong>off</strong>'), 'userinfobox notifysuccess');
+			echo $OUTPUT->notification('Strict mode '. ($settings['strict']?'<strong>on</strong>':'<strong>off</strong>. '."In production we recommend to turn it on."), 'userinfobox notifysuccess');
 
 			$spPrivatekey = $settings['sp']['x509cert'];
 			$spCert = $settings['sp']['privateKey'];
@@ -501,10 +294,10 @@
 				echo $OUTPUT->notification('Found errors while validating SAML settings info.<br>'.$e->getMessage(), 'userinfobox notifyproblem');
 			}
 
-			if ($pluginconfig->saml_slo == 'on') {
+			if ($pluginconfig->saml_slo) {
 				echo $OUTPUT->notification("Single Log Out is enabled. If the SLO process fail, close your browser to be sure that session of the apps are closed.", 'userinfobox notifysuccess');
 			} else {
-				echo $OUTPUT->notification("Single Log Out is disabled. If you log out from Wordpress your session at the IdP keeps alive.", 'userinfobox notifysuccess');
+				echo $OUTPUT->notification("Single Log Out is disabled. If you log out from Moodle your session at the IdP keeps alive.", 'userinfobox notifysuccess');
 			}
 
 			$fileSystemKeyExists = file_exists($CFG->dirroot.'/auth/onelogin_saml/certs/sp.key');

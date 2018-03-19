@@ -28,6 +28,11 @@ function xmldb_auth_onelogin_saml_upgrade($oldversion) {
 			set_config('field_map_idnumber', $pluginconfig->saml_idnumber_map, 'auth/onelogin_saml');
 		}
 	}
+	if($oldversion < 2018020601){
+		upgrade_fix_config_auth_plugin_names('onelogin_saml');
+        upgrade_fix_config_auth_plugin_defaults('onelogin_saml');
+        upgrade_plugin_savepoint(true, 2018020601, 'auth', 'onelogin_saml');
+	}
 
 	return true;
 }
