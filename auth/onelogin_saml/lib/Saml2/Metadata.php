@@ -1,10 +1,24 @@
 <?php
+/**
+ * This file is part of php-saml.
+ *
+ * (c) OneLogin Inc
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ * @package OneLogin
+ * @author  OneLogin Inc <saml-info@onelogin.com>
+ * @license MIT https://github.com/onelogin/php-saml/blob/master/LICENSE
+ * @link    https://github.com/onelogin/php-saml
+ */
+
+use RobRichards\XMLSecLibs\XMLSecurityKey;
+use RobRichards\XMLSecLibs\XMLSecurityDSig;
 
 /**
  * Metadata lib of OneLogin PHP Toolkit
- *
  */
-
 class OneLogin_Saml2_Metadata
 {
     const TIME_VALID = 172800;  // 2 days
@@ -21,6 +35,7 @@ class OneLogin_Saml2_Metadata
      * @param array         $contacts      Contacts info
      * @param array         $organization  Organization ingo
      * @param array         $attributes
+     *
      * @return string SAML Metadata XML
      */
     public static function builder($sp, $authnsign = false, $wsign = false, $validUntil = null, $cacheDuration = null, $contacts = array(), $organization = array(), $attributes = array())
@@ -29,7 +44,7 @@ class OneLogin_Saml2_Metadata
         if (!isset($validUntil)) {
             $validUntil =  time() + self::TIME_VALID;
         }
-        $validUntilTime =  gmdate('Y-m-d\TH:i:s\Z', $validUntil);
+        $validUntilTime =  OneLogin_Saml2_Utils::parseTime2SAML($validUntil);
 
         if (!isset($cacheDuration)) {
             $cacheDuration = self::TIME_CACHED;
@@ -38,9 +53,10 @@ class OneLogin_Saml2_Metadata
         $sls = '';
 
         if (isset($sp['singleLogoutService'])) {
+            $slsUrl = htmlspecialchars($sp['singleLogoutService']['url'], ENT_QUOTES);
             $sls = <<<SLS_TEMPLATE
         <md:SingleLogoutService Binding="{$sp['singleLogoutService']['binding']}"
-                                Location="{$sp['singleLogoutService']['url']}" />
+                                Location="{$slsUrl}" />
 
 SLS_TEMPLATE;
         }
@@ -127,7 +143,7 @@ CONTACT;
                     $reqAttrAuxStr = '>';
                     if (is_string($attribute['attributeValue'])) {
                         $attribute['attributeValue'] = array($attribute['attributeValue']);
-                    }                    
+                    }
                     foreach ($attribute['attributeValue'] as $attrValue) {
                         $reqAttrAuxStr .=<<<ATTRIBUTEVALUE
 
@@ -149,16 +165,18 @@ ATTRIBUTEVALUE;
 METADATA_TEMPLATE;
         }
 
+        $spEntityId = htmlspecialchars($sp['entityId'], ENT_QUOTES);
+        $acsUrl = htmlspecialchars($sp['assertionConsumerService']['url'], ENT_QUOTES);
         $metadata = <<<METADATA_TEMPLATE
 <?xml version="1.0"?>
 <md:EntityDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata"
                      validUntil="{$validUntilTime}"
                      cacheDuration="PT{$cacheDuration}S"
-                     entityID="{$sp['entityId']}">
+                     entityID="{$spEntityId}">
     <md:SPSSODescriptor AuthnRequestsSigned="{$strAuthnsign}" WantAssertionsSigned="{$strWsign}" protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
 {$sls}        <md:NameIDFormat>{$sp['NameIDFormat']}</md:NameIDFormat>
         <md:AssertionConsumerService Binding="{$sp['assertionConsumerService']['binding']}"
-                                     Location="{$sp['assertionConsumerService']['url']}"
+                                     Location="{$acsUrl}"
                                      index="1" />
         {$strAttributeConsumingService}
     </md:SPSSODescriptor>{$strOrganization}{$strContacts}
@@ -170,15 +188,15 @@ METADATA_TEMPLATE;
     /**
      * Signs the metadata with the key/cert provided
      *
-     * @param string $metadata          SAML Metadata XML
-     * @param string $key               x509 key
-     * @param string $cert              x509 cert
-     * @param string $signAlgorithm     Signature algorithm method
-     * @param string $digestAlgorithm   Digest algorithm method
+     * @param string $metadata        SAML Metadata XML
+     * @param string $key             x509 key
+     * @param string $cert            x509 cert
+     * @param string $signAlgorithm   Signature algorithm method
+     * @param string $digestAlgorithm Digest algorithm method
      *
      * @return string Signed Metadata
      */
-    public static function signMetadata($metadata, $key, $cert, $signAlgorithm = XMLSecurityKey::RSA_SHA1, $digestAlgorithm = XMLSecurityDSig::SHA1)
+    public static function signMetadata($metadata, $key, $cert, $signAlgorithm = XMLSecurityKey::RSA_SHA256, $digestAlgorithm = XMLSecurityDSig::SHA256)
     {
         return OneLogin_Saml2_Utils::addSign($metadata, $key, $cert, $signAlgorithm, $digestAlgorithm);
     }

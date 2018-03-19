@@ -5,11 +5,11 @@
  * 
  * @originalauthor OneLogin, Inc
  * @author Harrison Horowitz, Sixto Martin
- * @version 2.4.3
+ * @version 2.5.0
  * @license http://www.gnu.org/copyleft/gpl.html GNU Public License
  * @package auth/onelogin_saml
- * @requires XMLSecLibs v2.0.0-mod
- * @requires php-saml v2.10.5
+ * @requires XMLSecLibs v3.0.0
+ * @requires php-saml v3.0.0-namespaceless
  * @copyright 2011-2018 OneLogin.com
  * 
  * @description 
@@ -31,8 +31,8 @@
  * 
  */
 
-    $plugin->component = 'auth_onelogin_saml';
-    $plugin->version   = 2018020601;  // The current module version (Date: YYYYMMDDXX)
-    $plugin->requires  = 2017050500;
-    $plugin->cron      = 0;           // Period for cron to check this module (secs)
-    $plugin->maturity  = MATURITY_STABLE;
+$plugin->component = 'auth_onelogin_saml';
+$plugin->version   = 2018020601;  // The current module version (Date: YYYYMMDDXX)
+$plugin->requires  = 2017050500;
+$plugin->cron      = 0;           // Period for cron to check this module (secs)
+$plugin->maturity  = MATURITY_STABLE;

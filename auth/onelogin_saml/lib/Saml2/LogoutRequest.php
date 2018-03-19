@@ -1,45 +1,64 @@
 <?php
+/**
+ * This file is part of php-saml.
+ *
+ * (c) OneLogin Inc
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ * @package OneLogin
+ * @author  OneLogin Inc <saml-info@onelogin.com>
+ * @license MIT https://github.com/onelogin/php-saml/blob/master/LICENSE
+ * @link    https://github.com/onelogin/php-saml
+ */
+
+use RobRichards\XMLSecLibs\XMLSecurityKey;
 
 /**
  * SAML 2 Logout Request
- *
  */
 class OneLogin_Saml2_LogoutRequest
 {
     /**
-    * Contains the ID of the Logout Request
-    * @var string
-    */
+     * Contains the ID of the Logout Request
+     *
+     * @var string
+     */
     public $id;
 
     /**
      * Object that represents the setting info
+     *
      * @var OneLogin_Saml2_Settings
      */
     protected $_settings;
 
     /**
      * SAML Logout Request
+     *
      * @var string
      */
     protected $_logoutRequest;
 
     /**
-    * After execute a validation process, this var contains the cause
-    * @var string
-    */
+     * After execute a validation process, this var contains the cause
+     *
+     * @var Exception
+     */
     private $_error;
 
     /**
      * Constructs the Logout Request object.
      *
-     * @param OneLogin_Saml2_Settings $settings     Settings
-     * @param string|null             $request      A UUEncoded Logout Request.
-     * @param string|null             $nameId       The NameID that will be set in the LogoutRequest.
-     * @param string|null             $sessionIndex The SessionIndex (taken from the SAML Response in the SSO process).
-     * @param string|null             $nameIdFormat The NameID Format will be set in the LogoutRequest.
+     * @param OneLogin_Saml2_Settings $settings            Settings
+     * @param string|null             $request             A UUEncoded Logout Request.
+     * @param string|null             $nameId              The NameID that will be set in the LogoutRequest.
+     * @param string|null             $sessionIndex        The SessionIndex (taken from the SAML Response in the SSO process).
+     * @param string|null             $nameIdFormat        The NameID Format will be set in the LogoutRequest.
+     * @param string|null             $nameIdNameQualifier The NameID NameQualifier will be set in the LogoutRequest.
      */
-    public function __construct(OneLogin_Saml2_Settings $settings, $request = null, $nameId = null, $sessionIndex = null, $nameIdFormat = null)
+    public function __construct(OneLogin_Saml2_Settings $settings, $request = null, $nameId = null, $sessionIndex = null, $nameIdFormat = null, $nameIdNameQualifier = null)
     {
         $this->_settings = $settings;
 
@@ -61,11 +80,18 @@ class OneLogin_Saml2_LogoutRequest
 
             $cert = null;
             if (isset($security['nameIdEncrypted']) && $security['nameIdEncrypted']) {
-                $cert = $idpData['x509cert'];
+                $existsMultiX509Enc = isset($idpData['x509certMulti']) && isset($idpData['x509certMulti']['encryption']) && !empty($idpData['x509certMulti']['encryption']);
+
+                if ($existsMultiX509Enc) {
+                    $cert = $idpData['x509certMulti']['encryption'][0];
+                } else {
+                    $cert = $idpData['x509cert'];
+                }
             }
 
             if (!empty($nameId)) {
-                if (empty($nameIdFormat)) {
+                if (empty($nameIdFormat)
+                    && $spData['NameIDFormat'] != OneLogin_Saml2_Constants::NAMEID_UNSPECIFIED) {
                     $nameIdFormat = $spData['NameIDFormat'];
                 }
                 $spNameQualifier = null;
@@ -79,11 +105,13 @@ class OneLogin_Saml2_LogoutRequest
                 $nameId,
                 $spNameQualifier,
                 $nameIdFormat,
-                $cert
+                $cert,
+                $nameIdNameQualifier
             );
 
             $sessionIndexStr = isset($sessionIndex) ? "<samlp:SessionIndex>{$sessionIndex}</samlp:SessionIndex>" : "";
 
+            $spEntityId = htmlspecialchars($spData['entityId'], ENT_QUOTES);
             $logoutRequest = <<<LOGOUTREQUEST
 <samlp:LogoutRequest
     xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol"
@@ -92,7 +120,7 @@ class OneLogin_Saml2_LogoutRequest
     Version="2.0"
     IssueInstant="{$issueInstant}"
     Destination="{$idpData['singleLogoutService']['url']}">
-    <saml:Issuer>{$spData['entityId']}</saml:Issuer>
+    <saml:Issuer>{$spEntityId}</saml:Issuer>
     {$nameIdObj}
     {$sessionIndexStr}
 </samlp:LogoutRequest>
@@ -110,7 +138,6 @@ LOGOUTREQUEST;
         }
         $this->_logoutRequest = $logoutRequest;
     }
-
 
     /**
      * Returns the Logout Request defated, base64encoded, unsigned
@@ -284,6 +311,8 @@ LOGOUTREQUEST;
     /**
      * Checks if the Logout Request recieved is valid.
      *
+     * @param bool $retrieveParametersFromServer True if we want to use parameters from $_SERVER to validate the signature
+     *
      * @return bool If the Logout Request is or not valid
      */
     public function isValid($retrieveParametersFromServer = false)
@@ -357,49 +386,8 @@ LOGOUTREQUEST;
             }
 
             if (isset($_GET['Signature'])) {
-                if (!isset($_GET['SigAlg'])) {
-                    $signAlg = XMLSecurityKey::RSA_SHA1;
-                } else {
-                    $signAlg = $_GET['SigAlg'];
-                }
-
-                if ($retrieveParametersFromServer) {
-                    $signedQuery = 'SAMLRequest='.OneLogin_Saml2_Utils::extractOriginalQueryParam('SAMLRequest');
-                    if (isset($_GET['RelayState'])) {
-                        $signedQuery .= '&RelayState='.OneLogin_Saml2_Utils::extractOriginalQueryParam('RelayState');
-                    }
-                    $signedQuery .= '&SigAlg='.OneLogin_Saml2_Utils::extractOriginalQueryParam('SigAlg');
-                } else {
-                    $signedQuery = 'SAMLRequest='.urlencode($_GET['SAMLRequest']);
-                    if (isset($_GET['RelayState'])) {
-                        $signedQuery .= '&RelayState='.urlencode($_GET['RelayState']);
-                    }
-                    $signedQuery .= '&SigAlg='.urlencode($signAlg);
-                }
-
-                if (!isset($idpData['x509cert']) || empty($idpData['x509cert'])) {
-                    throw new OneLogin_Saml2_Error(
-                        "In order to validate the sign on the Logout Request, the x509cert of the IdP is required",
-                        OneLogin_Saml2_Error::CERT_NOT_FOUND
-                    );
-                }
-                $cert = $idpData['x509cert'];
-
-                $objKey = new XMLSecurityKey(XMLSecurityKey::RSA_SHA1, array('type' => 'public'));
-                $objKey->loadKey($cert, false, true);
-
-                if ($signAlg != XMLSecurityKey::RSA_SHA1) {
-                    try {
-                        $objKey = OneLogin_Saml2_Utils::castKey($objKey, $signAlg, 'public');
-                    } catch (Exception $e) {
-                        throw new OneLogin_Saml2_ValidationError(
-                            "Invalid signAlg in the recieved Logout Request",
-                            OneLogin_Saml2_ValidationError::INVALID_SIGNATURE
-                        );
-                    }
-                }
-
-                if ($objKey->verifySignature($signedQuery, base64_decode($_GET['Signature'])) !== 1) {
+                $signatureValid = OneLogin_Saml2_Utils::validateBinarySign("SAMLRequest", $_GET, $idpData, $retrieveParametersFromServer);
+                if (!$signatureValid) {
                     throw new OneLogin_Saml2_ValidationError(
                         "Signature validation failed. Logout Request rejected",
                         OneLogin_Saml2_ValidationError::INVALID_SIGNATURE
@@ -409,22 +397,37 @@ LOGOUTREQUEST;
 
             return true;
         } catch (Exception $e) {
-            $this->_error = $e->getMessage();
+            $this->_error = $e;
             $debug = $this->_settings->isDebugActive();
             if ($debug) {
-                echo $this->_error;
+                echo htmlentities($this->_error->getMessage());
             }
             return false;
         }
     }
 
-    /* After execute a validation process, if fails this method returns the cause
+    /**
+     * After execute a validation process, if fails this method returns the Exception of the cause
      *
-     * @return string Cause
+     * @return Exception Cause
+     */
+    public function getErrorException()
+    {
+        return $this->_error;
+    }
+
+    /**
+     * After execute a validation process, if fails this method returns the cause
+     *
+     * @return null|string Error reason
      */
     public function getError()
     {
-        return $this->_error;
+        $errorMsg = null;
+        if (isset($this->_error)) {
+            $errorMsg = htmlentities($this->_error->getMessage());
+        }
+        return $errorMsg;
     }
 
     /**
