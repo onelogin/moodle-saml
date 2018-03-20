@@ -32,7 +32,7 @@
  */
 
 $plugin->component = 'auth_onelogin_saml';
-$plugin->version   = 2018020601;  // The current module version (Date: YYYYMMDDXX)
-$plugin->requires  = 2017050500;
+$plugin->version   = 2018032001;  // The current module version (Date: YYYYMMDDXX)
+$plugin->requires  = 2017110800;
 $plugin->cron      = 0;           // Period for cron to check this module (secs)
 $plugin->maturity  = MATURITY_STABLE;
