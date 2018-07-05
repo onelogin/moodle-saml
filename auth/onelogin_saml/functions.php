@@ -127,6 +127,7 @@ function auth_onelogin_saml_authenticate_user_login($saml_account_matcher, $user
         }
     } else {
         // check if there's a deleted record (cheaply)
+        $query_conditions = array();
         $query_conditions[$saml_account_matcher] = $user_saml[$saml_account_matcher];
         $query_conditions['deleted'] = 1;
         if ($DB->get_field('user', 'id', $query_conditions)) {
@@ -154,7 +155,12 @@ function auth_onelogin_saml_authenticate_user_login($saml_account_matcher, $user
         if (!$user->id) {
             // if user not found, create him
             if ($saml_create) {
-                $user = create_user_record($user_saml[$saml_account_matcher], $password, $auth);
+                if (!isset($user_saml['username']) || empty($user_saml['username'])) {
+                    print_error("Username is required in order to create the account");
+                    return false;
+                }
+                $user = create_user_record($user_saml['username'], $password, $auth);
+                $user = auth_onelogin_saml_update_user_data($user, $user_saml, $saml_account_matcher);
                 $authplugin->sync_roles($user);
                 $created = true;
             }
@@ -162,6 +168,7 @@ function auth_onelogin_saml_authenticate_user_login($saml_account_matcher, $user
 
         if ($user->id && !$created) {
             if (empty($user->auth)) {
+                $query_conditions = array();
                 // For some reason auth isn't set yet
                 $query_conditions['id'] = $user->id;
                 $DB->set_field('user', 'auth', $auth, $query_conditions);
@@ -169,20 +176,7 @@ function auth_onelogin_saml_authenticate_user_login($saml_account_matcher, $user
             }
             // User already exists in database
             if ($saml_update) {
-                if (empty($user->firstaccess)) {
-                //prevent firstaccess from remaining 0 for manual account that never required confirmation
-                    $query_conditions['id'] = $user->id;
-                    $DB->set_field('user', 'firstaccess', $user->timemodified, $query_conditions);
-                    $user->firstaccess = $user->timemodified;
-                }
-                foreach ($user_saml as $ukey => $uval) {
-                    if (!empty($uval) && $user->{$ukey} != $uval) {
-                        $query_conditions['id'] = $user->id;
-                        $DB->set_field('user', $ukey, $uval, $query_conditions);
-                        $user->{$ukey} = $uval;
-                    }
-                }
-
+                $user = auth_onelogin_saml_update_user_data($user, $user_saml, $saml_account_matcher);
                 $authplugin->sync_roles($user);
             }
 
@@ -214,6 +208,30 @@ function auth_onelogin_saml_authenticate_user_login($saml_account_matcher, $user
     error_log("SAML Error. index.php -- FAILED LOGIN". $user_saml["username"]);
     print_error('[client '.getremoteaddr()."]  $CFG->wwwroot  --->  FAILED LOGIN: ".$user_saml["username"]);
     return false;
+}
+
+function auth_onelogin_saml_update_user_data($user, $user_saml, $saml_account_matcher) {
+    global $DB;
+    $query_conditions = array();
+
+    if (empty($user->firstaccess)) {
+        //prevent firstaccess from remaining 0 for manual account that never required confirmation
+        $query_conditions['id'] = $user->id;
+        $DB->set_field('user', 'firstaccess', $user->timemodified, $query_conditions);
+        $user->firstaccess = $user->timemodified;
+    }
+
+    foreach ($user_saml as $ukey => $uval) {
+        if (!empty($uval) && $user->{$ukey} != $uval) {
+            if ($ukey == $saml_account_matcher) {
+                continue;
+            }
+            $query_conditions['id'] = $user->id;
+            $DB->set_field('user', $ukey, $uval, $query_conditions);
+            $user->{$ukey} = $uval;
+        }
+    }
+    return $user;
 }
 
 /**
