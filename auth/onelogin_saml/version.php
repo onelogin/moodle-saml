@@ -7,7 +7,7 @@
  * @author Harrison Horowitz, Sixto Martin
  * @version 2.5.2
  * @license http://www.gnu.org/copyleft/gpl.html GNU Public License
- * @package auth/onelogin_saml
+ * @package auth_onelogin_saml
  * @requires XMLSecLibs v3.0.0
  * @requires php-saml v3.0.0-namespaceless
  * @copyright 2011-2018 OneLogin.com
