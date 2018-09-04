@@ -133,7 +133,7 @@ if ($ADMIN->fulltree) {
     $title = get_string('auth_onelogin_saml_username_map', 'auth_onelogin_saml');
     $description = '';
     $default = '';
-    $setting = new admin_setting_configtext($name, $title, $description, $default, PARAM_ALPHANUMEXT);
+    $setting = new admin_setting_configtext($name, $title, $description, $default, PARAM_RAW);
     $settings->add($setting);
 
     //add role mapping
