@@ -151,14 +151,14 @@ class auth_plugin_onelogin_saml extends auth_plugin_base {
 
         foreach ($userfields as $field) {
             if (!empty($this->config->{"field_map_$field"})) {
-                $moodleattributes[$field] = core_text::strtolower(trim($this->config->{"field_map_$field"}));
+                $moodleattributes[$field] = trim($this->config->{"field_map_$field"});
                 if (preg_match('/,/', $moodleattributes[$field])) {
                     $moodleattributes[$field] = explode(',', $moodleattributes[$field]);
                 }
             }
         }
 
-        $moodleattributes['username'] = core_text::strtolower(trim($this->config->field_map_username));
+        $moodleattributes['username'] = trim($this->config->field_map_username);
         return $moodleattributes;
     }
 
