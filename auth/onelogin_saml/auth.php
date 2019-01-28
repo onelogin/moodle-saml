@@ -6,12 +6,12 @@
  * 
  * @originalauthor OneLogin, Inc
  * @author Harrison Horowitz, Sixto Martin
- * @version 2.6.0
+ * @version 2.7.0
  * @license http://www.gnu.org/copyleft/gpl.html GNU Public License
- * @package auth/onelogin_saml
- * @requires XMLSecLibs v3.0.0
- * @requires php-saml v3.0.0-namespaceless
- * @copyright 2011-2018 OneLogin.com
+ * @package auth_onelogin_saml
+ * @requires XMLSecLibs v3.0.3
+ * @requires php-saml v3.1.0
+ * @copyright 2011-2019 OneLogin.com
  * 
  * @description 
  * Connects to Moodle, builds the configuration, discovers SAML status, and handles the login process accordingly.
@@ -31,6 +31,10 @@
  * work for most applications out there.
  * 
  */
+
+require_once '_toolkit_loader.php';
+
+use OneLogin\Saml2\Settings;
 
 global $CFG;
 
@@ -281,10 +285,10 @@ class auth_plugin_onelogin_saml extends auth_plugin_base {
     public function test_settings() {
         global $CFG, $OUTPUT;
 
+	require_once 'functions.php';
+
         $pluginconfig = get_config('auth_onelogin_saml');
 
-        require_once 'functions.php';
-        require_once '_toolkit_loader.php';
         $settings = auth_onelogin_saml_get_settings();
 
         echo $OUTPUT->notification('Debug mode '. ($settings['debug']?'<strong>on</strong>. '."In production turn it off":'<strong>off</strong>'), 'userinfobox notifysuccess');
@@ -294,9 +298,9 @@ class auth_plugin_onelogin_saml extends auth_plugin_base {
         $spCert = $settings['sp']['privateKey'];
 
         try {
-            $samlSettings = new OneLogin_Saml2_Settings($settings);
+            $samlSettings = new Settings($settings);
             echo $OUTPUT->notification('SAML settings are <strong>ok</strong>', 'userinfobox notifysuccess');
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             echo $OUTPUT->notification('Found errors while validating SAML settings info.<br>'.$e->getMessage(), 'userinfobox notifyproblem');
         }
 

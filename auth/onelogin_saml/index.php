@@ -5,12 +5,12 @@
  *
  * @originalauthor OneLogin, Inc
  * @author Harrison Horowitz, Sixto Martin
- * @version 2.4.3
+ * @version 2.7.0
  * @license http://www.gnu.org/copyleft/gpl.html GNU Public License
  * @package auth_onelogin_saml
- * @requires XMLSecLibs v2.0.0-mod
- * @requires php-saml v2.10.5
- * @copyright 2011-2018 OneLogin.com
+ * @requires XMLSecLibs v3.0.3
+ * @requires php-saml v3.1.0
+ * @copyright 2011-2019 OneLogin.com
  *
  * @description 
  * Connects to Moodle, builds the configuration, discovers SAML status, and handles the login process accordingly.
@@ -30,6 +30,11 @@
  * work for most applications out there.
  *
  */
+
+require_once '_toolkit_loader.php';
+
+use OneLogin\Saml2\Auth;
+
 
 define('AUTH_ONELOGIN_SAML_RETRIES', 100);
 
@@ -84,9 +89,9 @@ $logoutActived = isset($_GET['logout']) && $_GET['logout'];
 
 // get the plugin config for saml
 $pluginconfig = get_config('auth_onelogin_saml');
-require_once '_toolkit_loader.php';
+
 $settings = auth_onelogin_saml_get_settings();
-$auth = new Onelogin_Saml2_Auth($settings);
+$auth = new Auth($settings);
 
 if ($logoutActived) {
     if (isset($_GET['RelayState']) && !empty($_GET['RelayState'])) {

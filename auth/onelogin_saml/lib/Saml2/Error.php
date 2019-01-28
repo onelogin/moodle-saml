@@ -13,12 +13,16 @@
  * @link    https://github.com/onelogin/php-saml
  */
 
+namespace OneLogin\Saml2;
+
+use Exception;
+
 /**
  * Error class of OneLogin PHP Toolkit
  *
  * Defines the Error class
  */
-class OneLogin_Saml2_Error extends Exception
+class Error extends Exception
 {
     // Errors
     const SETTINGS_FILE_NOT_FOUND = 0;
@@ -46,12 +50,16 @@ class OneLogin_Saml2_Error extends Exception
      * @param int        $code The code error (defined in the error class).
      * @param array|null $args Arguments used in the message that describes the error.
      */
-    public function __construct($msg, $code = 0, $args = null)
+    public function __construct($msg, $code = 0, $args = array())
     {
         assert(is_string($msg));
         assert(is_int($code));
 
-        $message = OneLogin_Saml2_Utils::t($msg, $args);
+        if (!isset($args)) {
+            $args = array();
+        }
+        $params = array_merge(array($msg), $args);
+        $message = call_user_func_array('sprintf', $params);
 
         parent::__construct($message, $code);
     }

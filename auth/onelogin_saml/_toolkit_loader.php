@@ -9,12 +9,16 @@ if (file_exists('vendor/autoload.php')) {
     require 'vendor/autoload.php';
 }
 
-// Load xmlseclibs
-$xmlseclibsSrcDir = 'xmlseclibs';
 
-include_once $xmlseclibsSrcDir.'/XMLSecEnc.php';
-include_once $xmlseclibsSrcDir.'/XMLSecurityDSig.php';
-include_once $xmlseclibsSrcDir.'/XMLSecurityKey.php';
+// Load xmlseclibs
+if (!class_exists("\RobRichards\XMLSecLibs\XMLSecurityKey")) {
+	$xmlseclibsSrcDir = __DIR__.'/xmlseclibs/src';
+
+	include_once $xmlseclibsSrcDir.'/XMLSecEnc.php';
+	include_once $xmlseclibsSrcDir.'/XMLSecurityDSig.php';
+	include_once $xmlseclibsSrcDir.'/XMLSecurityKey.php';
+	include_once $xmlseclibsSrcDir.'/Utils/XPath.php';
+}
 
 // Load php-saml
 $libDir = __DIR__ . '/lib/Saml2/';

@@ -13,12 +13,14 @@
  * @link    https://github.com/onelogin/php-saml
  */
 
+namespace OneLogin\Saml2;
+
 /**
  * Constants of OneLogin PHP Toolkit
  *
  * Defines all required constants
  */
-class OneLogin_Saml2_Constants
+class Constants
 {
     // Value added to the current time in time condition validations
     const ALLOWED_CLOCK_DRIFT = 180;  // 3 min in seconds

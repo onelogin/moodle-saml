@@ -13,10 +13,16 @@
  * @link    https://github.com/onelogin/php-saml
  */
 
+namespace OneLogin\Saml2;
+
+use DOMDocument;
+use DOMNodeList;
+use Exception;
+
 /**
  * SAML 2 Logout Response
  */
-class OneLogin_Saml2_LogoutResponse
+class LogoutResponse
 {
     /**
      * Contains the ID of the Logout Response
@@ -28,7 +34,7 @@ class OneLogin_Saml2_LogoutResponse
     /**
      * Object that represents the setting info
      *
-     * @var OneLogin_Saml2_Settings
+     * @var Settings
      */
     protected $_settings;
 
@@ -42,14 +48,14 @@ class OneLogin_Saml2_LogoutResponse
     /**
      * A DOMDocument class loaded from the SAML LogoutResponse.
      *
-     * @var DomDocument
+     * @var DOMDocument
      */
     public $document;
 
     /**
      * After execute a validation process, if it fails, this var contains the cause
      *
-     * @var string|null
+     * @var Exception|null
      */
     private $_error;
 
@@ -57,16 +63,20 @@ class OneLogin_Saml2_LogoutResponse
      * Constructs a Logout Response object (Initialize params from settings and if provided
      * load the Logout Response.
      *
-     * @param OneLogin_Saml2_Settings $settings Settings.
+     * @param Settings $settings Settings.
      * @param string|null             $response An UUEncoded SAML Logout response from the IdP.
+     * 
+     * @throws Error
+     * @throws Exception
+     * 
      */
-    public function __construct(OneLogin_Saml2_Settings $settings, $response = null)
+    public function __construct(\OneLogin\Saml2\Settings $settings, $response = null)
     {
         $this->_settings = $settings;
 
         $baseURL = $this->_settings->getBaseURL();
         if (!empty($baseURL)) {
-            OneLogin_Saml2_Utils::setBaseURL($baseURL);
+            Utils::setBaseURL($baseURL);
         }
 
         if ($response) {
@@ -78,7 +88,14 @@ class OneLogin_Saml2_LogoutResponse
                 $this->_logoutResponse = $decoded;
             }
             $this->document = new DOMDocument();
-            $this->document = OneLogin_Saml2_Utils::loadXML($this->document, $this->_logoutResponse);
+            $this->document = Utils::loadXML($this->document, $this->_logoutResponse);
+
+            if (false === $this->document) {
+                throw new Error(
+                    "LogoutResponse could not be processed",
+                    Error::SAML_LOGOUTRESPONSE_INVALID
+                );
+            }
 
             if ($this->document->documentElement->hasAttribute('ID')) {
                 $this->id = $this->document->documentElement->getAttribute('ID');
@@ -123,8 +140,8 @@ class OneLogin_Saml2_LogoutResponse
      * @param bool        $retrieveParametersFromServer True if we want to use parameters from $_SERVER to validate the signature
      *
      * @return bool Returns if the SAML LogoutResponse is or not valid
-     *
-     * @throws Exception
+     * 
+     * @throws ValidationError
      */
     public function isValid($requestId = null, $retrieveParametersFromServer = false)
     {
@@ -137,11 +154,11 @@ class OneLogin_Saml2_LogoutResponse
                 $security = $this->_settings->getSecurityData();
 
                 if ($security['wantXMLValidation']) {
-                    $res = OneLogin_Saml2_Utils::validateXML($this->document, 'saml-schema-protocol-2.0.xsd', $this->_settings->isDebugActive());
+                    $res = Utils::validateXML($this->document, 'saml-schema-protocol-2.0.xsd', $this->_settings->isDebugActive());
                     if (!$res instanceof DOMDocument) {
-                        throw new OneLogin_Saml2_ValidationError(
+                        throw new ValidationError(
                             "Invalid SAML Logout Response. Not match the saml-schema-protocol-2.0.xsd",
-                            OneLogin_Saml2_ValidationError::INVALID_XML_FORMAT
+                            ValidationError::INVALID_XML_FORMAT
                         );
                     }
                 }
@@ -150,9 +167,9 @@ class OneLogin_Saml2_LogoutResponse
                 if (isset($requestId) && $this->document->documentElement->hasAttribute('InResponseTo')) {
                     $inResponseTo = $this->document->documentElement->getAttribute('InResponseTo');
                     if ($requestId != $inResponseTo) {
-                        throw new OneLogin_Saml2_ValidationError(
+                        throw new ValidationError(
                             "The InResponseTo of the Logout Response: $inResponseTo, does not match the ID of the Logout request sent by the SP: $requestId",
-                            OneLogin_Saml2_ValidationError::WRONG_INRESPONSETO
+                            ValidationError::WRONG_INRESPONSETO
                         );
                     }
                 }
@@ -160,43 +177,39 @@ class OneLogin_Saml2_LogoutResponse
                 // Check issuer
                 $issuer = $this->getIssuer();
                 if (!empty($issuer) && $issuer != $idPEntityId) {
-                    throw new OneLogin_Saml2_ValidationError(
+                    throw new ValidationError(
                         "Invalid issuer in the Logout Response",
-                        OneLogin_Saml2_ValidationError::WRONG_ISSUER
+                        ValidationError::WRONG_ISSUER
                     );
                 }
 
-                $currentURL = OneLogin_Saml2_Utils::getSelfRoutedURLNoQuery();
+                $currentURL = Utils::getSelfRoutedURLNoQuery();
 
                 // Check destination
                 if ($this->document->documentElement->hasAttribute('Destination')) {
                     $destination = $this->document->documentElement->getAttribute('Destination');
-                    if (!empty($destination)) {
-                        if (strpos($destination, $currentURL) === false) {
-                            throw new OneLogin_Saml2_ValidationError(
-                                "The LogoutResponse was received at $currentURL instead of $destination",
-                                OneLogin_Saml2_ValidationError::WRONG_DESTINATION
-                            );
-                        }
+                    if (!empty($destination) && strpos($destination, $currentURL) === false) {
+                        throw new ValidationError(
+                            "The LogoutResponse was received at $currentURL instead of $destination",
+                            ValidationError::WRONG_DESTINATION
+                        );
                     }
                 }
 
-                if ($security['wantMessagesSigned']) {
-                    if (!isset($_GET['Signature'])) {
-                        throw new OneLogin_Saml2_ValidationError(
-                            "The Message of the Logout Response is not signed and the SP requires it",
-                            OneLogin_Saml2_ValidationError::NO_SIGNED_MESSAGE
-                        );
-                    }
+                if ($security['wantMessagesSigned'] && !isset($_GET['Signature'])) {
+                    throw new ValidationError(
+                        "The Message of the Logout Response is not signed and the SP requires it",
+                        ValidationError::NO_SIGNED_MESSAGE
+                    );
                 }
             }
 
             if (isset($_GET['Signature'])) {
-                $signatureValid = OneLogin_Saml2_Utils::validateBinarySign("SAMLResponse", $_GET, $idpData, $retrieveParametersFromServer);
+                $signatureValid = Utils::validateBinarySign("SAMLResponse", $_GET, $idpData, $retrieveParametersFromServer);
                 if (!$signatureValid) {
-                    throw new OneLogin_Saml2_ValidationError(
+                    throw new ValidationError(
                         "Signature validation failed. Logout Response rejected",
-                        OneLogin_Saml2_ValidationError::INVALID_SIGNATURE
+                        ValidationError::INVALID_SIGNATURE
                     );
                 }
             }
@@ -214,13 +227,13 @@ class OneLogin_Saml2_LogoutResponse
     /**
      * Extracts a node from the DOMDocument (Logout Response Menssage)
      *
-     * @param string $query Xpath Expresion
+     * @param string $query Xpath Expression
      *
      * @return DOMNodeList The queried node
      */
     private function _query($query)
     {
-        return OneLogin_Saml2_Utils::query($this->document, $query);
+        return Utils::query($this->document, $query);
 
     }
 
@@ -235,8 +248,8 @@ class OneLogin_Saml2_LogoutResponse
         $spData = $this->_settings->getSPData();
         $idpData = $this->_settings->getIdPData();
 
-        $this->id = OneLogin_Saml2_Utils::generateUniqueID();
-        $issueInstant = OneLogin_Saml2_Utils::parseTime2SAML(time());
+        $this->id = Utils::generateUniqueID();
+        $issueInstant = Utils::parseTime2SAML(time());
 
         $spEntityId = htmlspecialchars($spData['entityId'], ENT_QUOTES);
         $logoutResponse = <<<LOGOUTRESPONSE
@@ -281,7 +294,7 @@ LOGOUTRESPONSE;
     /**
      * After execute a validation process, if fails this method returns the cause.
      *
-     * @return Exception Cause
+     * @return Exception|null Cause
      */
     public function getErrorException()
     {
