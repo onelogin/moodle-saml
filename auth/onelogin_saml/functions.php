@@ -221,14 +221,41 @@ function auth_onelogin_saml_update_user_data($user, $user_saml, $saml_account_ma
         $user->firstaccess = $user->timemodified;
     }
 
+    $custom_fields = [];
     foreach ($user_saml as $ukey => $uval) {
-        if (!empty($uval) && $user->{$ukey} != $uval) {
-            if ($ukey == $saml_account_matcher) {
-                continue;
+        if (preg_match('/^profile_field_/', $ukey)) {
+            $custom_field_name = str_replace('profile_field_', '', $ukey);
+            $custom_fields[$custom_field_name] = $uval;
+        } else {
+            if (!empty($uval) && $user->{$ukey} != $uval) {
+                if ($ukey == $saml_account_matcher) {
+                    continue;
+                }
+
+                $query_conditions['id'] = $user->id;
+                $DB->set_field('user', $ukey, $uval, $query_conditions);
+                $user->{$ukey} = $uval;
             }
-            $query_conditions['id'] = $user->id;
-            $DB->set_field('user', $ukey, $uval, $query_conditions);
-            $user->{$ukey} = $uval;
+        }
+    }
+
+    if (!empty($custom_fields)) {
+        $customfieldnames = $DB->get_records('user_info_field', null, '', 'shortname, id');
+        foreach(array_keys($customfieldnames) as $customfieldname) {
+            if (isset($custom_fields[$customfieldname])) {
+                $value = $custom_fields[$customfieldname];
+                $data = new stdClass();
+                $data->userid = $user->id;
+                $data->fieldid = $customfieldnames[$customfieldname]->id;
+                $data->data = $value;
+                if ($dataid = $DB->get_field('user_info_data', 'id', array('userid' => $user->id, 'fieldid' => $customfieldnames[$customfieldname]->id))) {
+                    $data->id = $dataid;
+                    $DB->update_record('user_info_data', $data);
+                } else {
+                    $DB->insert_record('user_info_data', $data);
+                }
+                $user->profile[$customfieldname] = $value;
+            }
         }
     }
     return $user;
