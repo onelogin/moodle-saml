@@ -108,7 +108,7 @@ function auth_onelogin_saml_get_settings() {
  * @param boolean $saml_update  Auto-update user
  * @return user|flase A {@link $USER} object or false if error
  */
-function auth_onelogin_saml_authenticate_user_login($saml_account_matcher, $user_saml, $saml_create = false, $saml_update = false) {
+function auth_onelogin_saml_authenticate_user_login($saml_account_matcher, $user_saml, $saml_create = false, $saml_update = false, $trigger_events = false) {
 
     global $CFG, $DB;
 
@@ -161,6 +161,10 @@ function auth_onelogin_saml_authenticate_user_login($saml_account_matcher, $user
                 }
                 $user = create_user_record($user_saml['username'], $password, $auth);
                 $user = auth_onelogin_saml_update_user_data($user, $user_saml, $saml_account_matcher);
+
+                if (isset($user->id) && $trigger_events) {
+                    \core\event\user_created::create_from_userid($user->id)->trigger();
+                }
                 $authplugin->sync_roles($user);
                 $created = true;
             }
@@ -177,6 +181,9 @@ function auth_onelogin_saml_authenticate_user_login($saml_account_matcher, $user
             // User already exists in database
             if ($saml_update) {
                 $user = auth_onelogin_saml_update_user_data($user, $user_saml, $saml_account_matcher);
+                if ($trigger_events) {
+                    \core\event\user_updated::create_from_userid($user->id)->trigger();
+                }
                 $authplugin->sync_roles($user);
             }
 

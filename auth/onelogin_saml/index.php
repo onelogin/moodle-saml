@@ -197,7 +197,8 @@ if ($logoutActived) {
 
                 $saml_create = $pluginconfig->saml_auto_create_users? true : false;
                 $saml_update = $pluginconfig->saml_auto_update_users? true : false;
-                $USER = auth_onelogin_saml_authenticate_user_login($saml_account_matcher, $saml_user, $saml_create, $saml_update);
+                $trigger_events = $pluginconfig->saml_trigger_user_create_update_events? true : false;
+                $USER = auth_onelogin_saml_authenticate_user_login($saml_account_matcher, $saml_user, $saml_create, $saml_update, $trigger_events);
 
                 // check that the signin worked
                 if ($USER != false) {
