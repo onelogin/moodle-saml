@@ -103,6 +103,13 @@ if ($ADMIN->fulltree) {
     $setting = new admin_setting_configcheckbox($name, $title, $description, $default, true, false);
     $settings->add($setting);
 
+    $name = 'auth_onelogin_saml/saml_trigger_user_create_update_events';
+    $title = get_string('auth_onelogin_saml_saml_trigger_user_create_update_events', 'auth_onelogin_saml');
+    $description = get_string('auth_onelogin_saml_saml_trigger_user_create_update_events_description', 'auth_onelogin_saml');
+    $default = false;
+    $setting = new admin_setting_configcheckbox($name, $title, $description, $default, true, false);
+    $settings->add($setting);
+
     $name = 'auth_onelogin_saml/saml_slo';
     $title = get_string('auth_onelogin_saml_slo', 'auth_onelogin_saml');
     $description = get_string('auth_onelogin_saml_slo_description', 'auth_onelogin_saml');
