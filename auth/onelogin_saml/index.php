@@ -53,6 +53,7 @@ global $CFG, $USER, $SESSION, $_POST, $_GET, $_SERVER;
 if (isset($_GET['errorcode']) && $_GET['errorcode'] != 4) {
     $errorCode = clean_param($_GET['errorcode'], PARAM_INT);
     $location = $CFG->wwwroot.'/login/index.php?normal&errorcode='.$errorCode;
+    $location = clean_param($location, PARAM_LOCALURL);
     header('Location: '.$location);
     exit();
 }
@@ -95,9 +96,11 @@ $auth = new Auth($settings);
 
 if ($logoutActived) {
     if (isset($_GET['RelayState']) && !empty($_GET['RelayState'])) {
-        $location = clean_param($_GET['RelayState'], PARAM_URL);
+        // To avoid 'Open Redirect' attacks, before execute the
+        // redirection confirm the value of $_GET['RelayState'] is a // trusted URL.
+        $location = clean_param($_GET['RelayState'], PARAM_LOCALURL);
     } else if (isset($wantsurl)) {
-        $location = $wantsurl;
+        $location = clean_param($wantsurl, PARAM_LOCALURL);
     } else {
         $location = $CFG->wwwroot;
     }
@@ -115,7 +118,7 @@ if ($logoutActived) {
             if (empty($errors)) {
                 auth_onelogin_saml_deleteLocalSession();
             } else {
-                print_error('auth_onelogin_saml: '.implode(', ', $errors).'<br><br>'.$auth->getLastErrorReason());
+                print_error('auth_onelogin_saml: '.htmlentities(implode(', ', $errors)).'<br><br>'.htmlentities($auth->getLastErrorReason()));
                 exit();
             }
         } else if ($pluginconfig->saml_slo) {
@@ -169,7 +172,7 @@ if ($logoutActived) {
             } else {
                 $errorMsg = "auth_onelogin_saml: An invalid SAML response was received from the Identity Provider. Contact the admin.";
                 if ($pluginconfig->saml_debug_mode) {
-                    $errorMsg .= "<br>".implode(', ', $errors).'<br><br>'.$auth->getLastErrorReason();
+                    $errorMsg .= "<br>".htmlentities(implode(', ', $errors)).'<br><br>'.htmlentities($auth->getLastErrorReason());
                 }
             }
         } catch (Exception $e) {
@@ -215,7 +218,7 @@ if ($logoutActived) {
 
                     if (isset($wantsurl)) {
                         // and (strpos($wantsurl, $CFG->wwwroot) === 0)
-                        $urltogo = clean_param($wantsurl, PARAM_URL);
+                        $urltogo = clean_param($wantsurl, PARAM_LOCALURL);
                     } else {
                         $urltogo = $CFG->wwwroot.'/';
                     }

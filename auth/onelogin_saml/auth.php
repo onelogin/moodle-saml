@@ -301,7 +301,7 @@ class auth_plugin_onelogin_saml extends auth_plugin_base {
             $samlSettings = new Settings($settings);
             echo $OUTPUT->notification('SAML settings are <strong>ok</strong>', 'userinfobox notifysuccess');
         } catch (\Exception $e) {
-            echo $OUTPUT->notification('Found errors while validating SAML settings info.<br>'.$e->getMessage(), 'userinfobox notifyproblem');
+            echo $OUTPUT->notification('Found errors while validating SAML settings info.<br>'.htmlentities($e->getMessage()), 'userinfobox notifyproblem');
         }
 
         if ($pluginconfig->saml_slo) {
